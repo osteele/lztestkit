@@ -34,8 +34,3 @@ Test.addProperty('assertFasterThan', function(expected, actual, message) {
                    actual, "ms not < ", expected, "ms"].join(''));
     canvas.setAttribute('runTests', canvas.runTests + 1)
 });
-
-if (global['testsuite']) {
-    testsuite.addProperty('assertFasterThan', Test.prototype.assertFasterThan);
-    testsuite.addProperty('fail', testsuite.prototype.failAssertion);
-}

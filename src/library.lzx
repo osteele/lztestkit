@@ -1,0 +1,11 @@
+<!-- Copyright 2007 by Oliver Steele.  Available under the MIT License. -->
+<library>
+  <include href="lzunit">
+    <script src="autorun-lz.js"/>
+    <script src="hoptkit.js"/>
+    <script src="lzmock.js"/>
+    <script src="lzspec.js"/>
+    <include href="lzunit-async.lzx"/>
+    <script src="lzunit-extensions.js"/>
+  </include>
+</library>

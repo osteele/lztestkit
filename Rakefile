@@ -2,15 +2,26 @@ FILES = %w(autorun-browser.js autorun-include.jsp autorun-lz.js hopkit.js jsspec
 
 # TODO: sync sequencing.js, hopkit.js with jsutils
 
-def dirsync(source, target)
+def dirsync(source_dir, target_dir)
+  options = {}
+  options[:noop] = true if ENV['dryrun']
   FILES.each do |fname|
-    s = File.expand_path(File.join(source, fname))
-    t = File.expand_path(File.join(target, fname))
-    if File.exists?(t) and File.mtime(s) < File.mtime(t)
-      puts "#{s} is older than #{t}; did not copy"
-    elsif !File.exists?(t) or File.mtime(s) > File.mtime(t)
-      cp s, t
+    source = File.expand_path(File.join(source_dir, fname))
+    target = File.expand_path(File.join(target_dir, fname))
+    copy = false
+    case
+    when !File.exists?(target)
+      copy = true
+    when (File.size(source) == File.size(target) and
+            File.read(source) == File.read(target))
+      copy = false
+    when File.mtime(source) < File.mtime(target)
+      puts "Skipping #{fname}: source is older than target"
+      sh "ls -l {#{source_dir},#{target_dir}}/#{fname}"
+    else
+      copy = true
     end
+    cp source, target, options if copy
   end
 end
 

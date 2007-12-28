@@ -32,9 +32,14 @@ TestCase.addProperty('expect', function(value) {
 function ExpectValue(value, testCase) {
     this.value = value;
     this.testCase = testCase;
+    this.is = this;
 }
 
 ExpectValue.prototype = {
+    a: function(klass) {
+        this.testCase.assertTrue(this.value instanceof klass, klass);
+    },
+    
     property: function(propertyName) {
         var actual = this.value,
             testCase = this.testCase;
@@ -50,7 +55,12 @@ ExpectValue.prototype = {
     properties: function(properties) {
         var value = this.value,
             testCase = this.testCase;
-        for (var propertyName in properties)
-            testCase.assertEquals(properties[propertyName], value[propertyName], propertyName);
+        for (var propertyName in properties) {
+            var expect = properties[propertyName],
+                actual = value[propertyName];
+            if (expect instanceof Date && expect/1 == actual/1)
+                expect = actual;
+            testCase.assertEquals(expect, actual, propertyName);
+        }
     }
 }
