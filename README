@@ -15,10 +15,11 @@ testing, test selection, and automated test sequencing.
   the browser by visiting a single url, instead of navigating to each
   url in turn.
 
-* Behavioral testing implements mocks, stubs, and expectations.  It allows
-  you to *test* one class, while *stubbing* the classes that it depends on.
-  You can even verify that the tested class makes functions that you expect
-  it to.  This a loose port of rspec to OpenLaszlo.
+* Behavioral testing implements mocks, stubs, and expectations.  It
+  allows you to *test* one class, while *stubbing* the classes that it
+  depends on.  You can even verify that the tested class makes
+  functions that you expect it to.  This is a loose port of rspec to
+  OpenLaszlo.
 
 * Asynchronous testing allows you to write a test case that isn't
   considered complete when it returns.  If a test case creates a
@@ -28,12 +29,18 @@ testing, test selection, and automated test sequencing.
 
 == Requirements
 
-This package requires OpenLaszlo 3.4.0 or 4.0.6.  (Others versions
+This package requires OpenLaszlo 3.4.0 or 4.0.6.  (Other versions
 might work, but aren't tested.)
 
 == Test selection
 
+Include lzunit-extensions.js in your application (or library.lzx,
+which includes this).  Then, include the testCase=<testCaseName> query
+parameter in the URL that you use to open the application, where
+<testCaseName> is the name of the test case.  Only this test case will
+execute.
 
+See the example in examples/test-selection.lzx.
 
 == Automated test sequencing execution
 
@@ -56,7 +63,18 @@ scaffolding, you can place that directive there.
 
 TODO
 
-Let's you writing things like this in a test case:
+This lets you write things like this in a test case:
+
+  myMockObject = Mock.Create(MyClass);
+  myMockObject.mock.expects.aMethod(1, 'arg', {name:2});
+  // call a fn that invokes myMockObject.aMethod(1, 'arg', {name:2})
+  myMockObject.mock.verify();
+
+  myMockObject.stub('aMethod', 'arg1', 'arg2', Function)
+    .by.calling(1);
+  // call a fn that invokes myMockObject.aMethod('arg1', 'arg2', function(n) {...})
+  // and expects the funarg to be called back with n=1
+
   calling(anObject, 'methodName', 'arg1')
     .should.call(otherObject, 'method', 'some', 'arguments')
     .and.send(anObject, 'onchange', 'data')
@@ -74,14 +92,17 @@ hopkit.js -- support file for jsspec and lzmock
 
 == Asynchronous testing
 
-For now, see test/test-lzunit-async.lzx.  The new methods are also copiously documented
+TODO
 
-== Other Files
+For now, see test/test-lzunit-async.lzx.  The new methods are also
+copiously documented in src/lzunit-async.lzx.
+
+== Support Files
 
 The browser support for autorun relies on jquery and swfobject.  I've
-included versions of these in the file.
+included versions of these in the src directory.
 
-The behavioural testing files use hopkitjs to define chains.  It's not
+The behavioural testing files use hopkit.js to define chains.  It's not
 necessary to use this file directly.
 
 == License
