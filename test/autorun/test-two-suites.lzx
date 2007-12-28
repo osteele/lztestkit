@@ -1,0 +1,20 @@
+<canvas debug="true">
+  <include href="lzunit"/>
+  <script src="../../src/autorun-lz.js"/>
+
+  <TestSuite>
+    <TestCase>
+      <method name="testFirstSuite">
+        assertTrue(true);
+      </method>
+    </TestCase>
+  </TestSuite>
+
+  <TestSuite>
+    <TestCase>
+      <method name="testSecondSuite">
+        assertTrue(true);
+      </method>
+    </TestCase>
+  </TestSuite>
+</canvas>

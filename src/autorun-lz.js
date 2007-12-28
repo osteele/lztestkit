@@ -29,3 +29,19 @@ LzBrowser.exec = function(expr) {
     _root.getURL('javascript:'+expr);
     arguments.callee.nextTime = now + 100;
 }
+
+// The following is from lzosutils:
+
+// This is missing from ActionScript.
+//
+// +pattern+ is required to be a string; there's therefore no point in
+// accepting a Function for +sub+.
+String.prototype['replace'] || (String.prototype.replace = function(pattern, sub) {
+    var splits = this.split(pattern),
+        segments = new Array(splits.length*2-1);
+    for (var i = 0, dst = 0; i < splits.length; i++) {
+        i && (segments[dst++] = sub);
+        segments[dst++] = splits[i];
+    }
+    return segments.join('');
+})

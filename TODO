@@ -1,5 +1,6 @@
-* fix update to preview; ignore null
+* docs for behavioral testing, async
 * implement eventually.should
+* more test cases for autorun
 * remove old stuff
 * create new expects()
 * fix the error reporting kludge in expects

@@ -4,6 +4,10 @@
   <script src="../src/lzunit-extensions.js"/>
 
 <TestSuite>
+  <method name="setUp">
+    Debug.write("The following two methods are expected to fail.");
+  </method>
+  
   <TestCase>
     <method name="testFasterThan">
       this.assertFasterThan(100, 50);

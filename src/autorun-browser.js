@@ -130,8 +130,8 @@ LzTestApplication.prototype = {
         var match = message.match(/failures:\s*(\d+)/),
             failures = match && parseInt(match[1]);
         if (!match) {
+            gRunner.failed(this.url + ' sent invalid message: ' + message);
             this.unload();
-            gRunner.failed(url + ' sent invalid message: ' + message);
             return;
         }
         if (this.suiteCount == null)

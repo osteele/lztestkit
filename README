@@ -19,19 +19,53 @@ testing, and automated execution of a series of test applets.
   one in turn.
 
 == Requirements
-* OpenLaszlo 3.4+ or 4.0.6+.  (Earlier versions might work, but aren't tested.)
+* OpenLaszlo 3.4.0 or 4.0.6.  (Earlier versions might work, but aren't tested.)
 
-== Contents
+== Automated execution
 
-=== Behavioral testing
+autorun-lz.js implements the OpenLaszlo side of automated execution;
+autorun-browser.js implements browser support; and autorun-include.jsp
+is a JSP include that lists the files in the current directory for the
+browser-side code to look at.
 
-=== Automated execution
+Copy test/autorun/index.jsp into your test directory, and update the
+includes at the top of the file to reflect the paths to the lztestkit
+src and lib subdirectories.  By default, this file will run files in
+its directory that match /test-*.lzx/; this is a configuration
+parameter that it should be obvious how to change.
 
-autorun-browser.js
-autorun-include.jsp
-autorun-lz.js
+Each test cases should include autorun-lz.js via <script
+src="autorun-lz.js"/>.  If you have a library.lzx file with test
+scaffolding, you can place that directive there.
 
-=== Other Files
+== Behavioral testing
+
+TODO
+
+Let's you writing things like this in a test case:
+  calling(anObject, 'methodName', 'arg1')
+    .should.call(otherObject, 'method', 'some', 'arguments')
+    .and.send(anObject, 'onchange', 'data')
+    .and.returnWith(1)
+
+  constructing('MyClass', 'initarg')
+    .should.call(otherObject, 'method', 'some', 'arguments')
+
+
+lzmock.js
+lzspec.js
+lzunit-extensions.js -- adds assertNotEquals, assert[Not]Contains, and assertFasterThan to TestCase
+jsspec.js -- js-level support for lzspec (without OpenLaszlo dependencies)
+hopkit.js -- support file for jsspec and lzmock
+
+== Asynchronous testing
+
+For now, see test/test-lzunit-async.lzx.  The new methods are also copiously documented
+
+== Other Files
+
+The browser support for autorun relies on jquery and swfobject.  I've
+included versions of these in the file.
 
 The behavioural testing files use hopkitjs to define chains.  It's not
 necessary to use this file directly.
