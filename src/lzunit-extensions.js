@@ -1,5 +1,9 @@
 /* Copyright 2007 by Oliver Steele.  Available under the MIT License. */
 
+// OL 3.4 compatibility
+Test.addProperty != Object.addProperty
+    || (Test.addProperty = function(name, value) {this.prototype[name] = value});
+
 Test.addProperty('assertNotEquals', function(expected, actual, message) {
     if (expected == actual) {
         this.fail(this.format(jsTrue(message) ? message :  "==",

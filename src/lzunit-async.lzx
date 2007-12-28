@@ -197,15 +197,17 @@
       setTimeout(c(next), 10);
       return next;
       function next() {
-        if (--pending >= 0)
+        if (--pending > 0)
           return;
         if (!functionSets.length)
-          return c.done();
+          return;
         c.suspend();
         var fns = functionSets.shift();
         if (typeof fns == 'function') fns = [fns];
+        pending = fns.length;
         for (var i = 0; i < fns.length; i++)
           fns[i].call(self);
+        functionSets.length || c.done();
       }
     ]]></method>
     <handler name="oninit">
