@@ -1,25 +1,25 @@
-<!-- Copyright 2007 by Laszlo Systems, Inc.  All rights reserved. -->
+<!-- Copyright 2007 by Oliver Steele.  Available under the MIT License. -->
 <canvas debug="true">
   <include href="lzunit"/>
   <script src="../src/lzunit-extensions.js"/>
-
-<TestSuite>
-  <method name="setUp">
-    Debug.write("The following two methods are expected to fail.");
-  </method>
   
-  <TestCase>
-    <method name="testFasterThan">
-      this.assertFasterThan(100, 50);
-      this.assertFasterThan(100, 100);
-      this.assertFasterThan(100, 50, 'message');
+  <TestSuite>
+    <method name="setUp">
+      Debug.write("The following two methods are expected to fail.");
     </method>
-
-    <method name="testNotFasterThan">
-      this.assertFasterThan(100, 200);
-      this.assertFasterThan(100, 200, 'message');
-    </method>
-  </TestCase>
-</TestSuite>
+    
+    <TestCase>
+      <method name="testFasterThan">
+        this.assertFasterThan(100, 50);
+        this.assertFasterThan(100, 100);
+        this.assertFasterThan(100, 50, 'message');
+      </method>
+      
+      <method name="testNotFasterThan">
+        this.assertFasterThan(100, 200);
+        this.assertFasterThan(100, 200, 'message');
+      </method>
+    </TestCase>
+  </TestSuite>
 </canvas>
 

@@ -1,0 +1,40 @@
+<!-- Copyright 2007 by Oliver Steele.  Available under the MIT License. -->
+<canvas debug="true">
+  <include href="lzunit"/>
+  <script src="../src/lzunit-extensions.js"/>
+
+  <TestSuite>
+    <TestCase>
+      <method name="testFirst">
+        Debug.write('running testFirst');
+        assertTrue(true);
+      </method>
+
+      <method name="testSecond">
+        Debug.write('running testSecond');
+        assertTrue(true);
+      </method>
+    </TestCase>
+  </TestSuite>
+
+  
+  <text id="instructions" fontsize="18" multiline="true" width="80%"
+        y="90" align="center" bgcolor="white"
+        visible="${!!this.getText()}"/>
+
+  <!-- The following block provides instructions for how to use this
+       example, if it looks like it was launched without. -->
+  <script><![CDATA[
+    if (global['testCase']) {
+      Debug.write('You are running only the', global['testCase'], 'test case');
+    } else {
+      // this is in the global namespace, but that's okay here.
+      var url = LzBrowser.getLoadURL()+'&testCase=testFirst';
+      instructions.setText(['Visit <a href="', url, '"><u><font color="#0000ff">',
+        LzBrowser.getLoadURL(), '<font color="#ff0000">&testCase=testFirst</font>',
+        '</font></u></a> to run only the first test case.'].join(''));
+      Debug.write('Visit', LzBrowser.getLoadURL()+'&testCase=testFirst',
+        'to run only the first test case');
+    }
+  ]]></script>
+</canvas>

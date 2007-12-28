@@ -4,6 +4,11 @@
 Test.addProperty != Object.addProperty
     || (Test.addProperty = function(name, value) {this.prototype[name] = value});
 
+
+/*
+ * New assertions
+ */
+
 Test.addProperty('assertNotEquals', function(expected, actual, message) {
     if (expected == actual) {
         this.fail(this.format(jsTrue(message) ? message :  "==",
@@ -33,4 +38,33 @@ Test.addProperty('assertFasterThan', function(expected, actual, message) {
         this.fail([message || '', message && ': ' || '',
                    actual, "ms not < ", expected, "ms"].join(''));
     canvas.setAttribute('runTests', canvas.runTests + 1)
+});
+
+
+/*
+ *
+ */
+
+TestSuite.prototype.initSuiteWithoutRestriction =
+    TestSuite.prototype.initSuite;
+
+TestSuite.addProperty('initSuite', function() {
+    this.initSuiteWithoutRestriction.apply(this, arguments);
+    var methodName = global['testCase'] || null;
+    if (!methodName)
+        return;
+    //Debug.write("Only running", methodName);
+    var count = 0;
+    for (v in this.tests) {
+        var tc = this.tests[v];
+        if (typeof tc != 'undefined') {
+            var selected = [];
+            for (var i in tc)
+                if (tc[i] == methodName) {
+                    count += 1;
+                    selected.push(tc[i]);
+                }
+            this.tests[v] = selected;
+        }
+    }
 });

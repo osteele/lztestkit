@@ -1,3 +1,4 @@
+<!-- Copyright 2007 by Oliver Steele.  Available under the MIT License. -->
 <canvas debug="true">
   <include href="../src/lzunit-async.lzx"/>
   <script src="../src/autorun-lz.js"/>

@@ -1,10 +1,24 @@
 == LZTestKit
 
 This package extends lzunit with behavioral testing, asynchronous
-testing, and automated execution of a series of test applets.
+testing, test selection, and automated test sequencing.
 
-* Behavioral testing implements mocks, stubs, and expectations.  It's
-  a loose port of rspec to OpenLaszlo.
+* Test selection runs a single test case within a test applet, without
+  modifying the sources.  (You supply the name of the test case as a
+  query parameter in the application URL.)  It allows you to use your
+  test applet as your debugging scaffolding, without running a lot of
+  code that you aren't interested in.
+
+* Automated test sequencing runs all the test applets in a directory,
+  in series, in a single browser window, stopping if one of them has
+  an error.  It allows you to run all of a package's test cases from
+  the browser by visiting a single url, instead of navigating to each
+  url in turn.
+
+* Behavioral testing implements mocks, stubs, and expectations.  It allows
+  you to *test* one class, while *stubbing* the classes that it depends on.
+  You can even verify that the tested class makes functions that you expect
+  it to.  This a loose port of rspec to OpenLaszlo.
 
 * Asynchronous testing allows you to write a test case that isn't
   considered complete when it returns.  If a test case creates a
@@ -12,16 +26,16 @@ testing, and automated execution of a series of test applets.
   function returns.  (Except if the callback function creates a
   callback function, etc.)
 
-* Automated test execution runs all the test applets in a directory,
-  in series, in a single browser window, stopping if one of them has
-  an error.  It allows you to run all of a package's test cases from
-  the browser by visiting a single url, instead of clicking on each
-  one in turn.
-
 == Requirements
-* OpenLaszlo 3.4.0 or 4.0.6.  (Earlier versions might work, but aren't tested.)
 
-== Automated execution
+This package requires OpenLaszlo 3.4.0 or 4.0.6.  (Others versions
+might work, but aren't tested.)
+
+== Test selection
+
+
+
+== Automated test sequencing execution
 
 autorun-lz.js implements the OpenLaszlo side of automated execution;
 autorun-browser.js implements browser support; and autorun-include.jsp
