@@ -3,3 +3,4 @@ syntax: glob
 *.tgz
 \#*\#
 .\#*
+build

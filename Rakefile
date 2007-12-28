@@ -1,20 +1,37 @@
 RELEASE_VERSION = '0.9a1'
 ARCHIVE_NAME = "lztestkit-#{RELEASE_VERSION}.tgz"
-IGNORE = Dir['**/#*#'] + Dir['**/.#*']
+IGNORE = Dir['**/#*#'] + Dir['**/.#*'] + Dir['build']
 
 task :archive => ARCHIVE_NAME
+task :docs => 'build/index.html'
+
 file ARCHIVE_NAME => Dir['**/*'] - ['Rakefile'] - Dir['*.tgz'] - IGNORE do |t|
   puts t.prerequisites
   sh "tar cfz #{t.name} #{t.prerequisites}"
 end
 
-task :publish => ARCHIVE_NAME do
-  sh "scp README #{ARCHIVE_NAME} osteele.com:osteele.com/sources/openlaszlo/lztestkit"
+task :publish => [ARCHIVE_NAME, :docs] do
+  target = "osteele.com:osteele.com/sources/openlaszlo/lztestkit"
+  sh "rsync README #{ARCHIVE_NAME} #{target}"
+  sh "rsync build/index.html #{target}/index.html"
 end
 
 task :clean do
   files = Dir['*.tgz']
   rm files if files.any?
+end
+
+task 'build/index.html' => 'README' do |t|
+  mkdir_p 'build'
+  sh "rdoc --one-file -n build/index.html README"
+  url = "http://osteele.com/sources/openlaszlo/#{ARCHIVE_NAME}"
+  content = File.read(t.name).
+    sub(/<h2>File:.*?<\/h2>/, '').
+    sub(/<h2>Classes<\/h2>/, '').
+    sub(/<table.*?<\/table>/m, '').
+    sub('{download-location}', "<a href=\"#{url}\">#{url}</a>")
+  File.open(t.name, 'w').write(content)
+  #jsrdoc 'bezier.js', t.name, 'JavaScript Beziers'
 end
 
 SHARED_FILES = %w(autorun-browser.js autorun-include.jsp autorun-lz.js hopkit.js jsspec.js lzmock.js lzspec.js lzunit-async.lzx lzunit-extensions.js)

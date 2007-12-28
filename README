@@ -32,7 +32,21 @@ testing, test selection, and automated test sequencing.
 This package requires OpenLaszlo 3.4.0 or 4.0.6.  (Other versions
 might work, but aren't tested.)
 
-== Test selection
+== Installation
+
+* Download the latest version from {download-location}.
+
+* Unpack it into your OpenLaszlo webapp directory; for example, at
+  ${OPENLASZLO_HOME}/Server/lps-3.4.0/lztestkit.
+
+* Visit e.g. http://127.0.0.1:8080/openlaszlo-3.4.0/lztestkit/examples
+  and http://127.0.0.1:8080/openlaszlo-3.4.0/lztestkit/test.  You
+  should be able to click on the examples and tests in order to run
+  them.
+
+== Features
+
+=== Test selection
 
 Include lzunit-extensions.js in your application (or library.lzx,
 which includes this).  Then, include the testCase=<testCaseName> query
@@ -42,7 +56,7 @@ execute.
 
 See the example in examples/test-selection.lzx.
 
-== Automated test sequencing execution
+=== Automated test sequencing execution
 
 autorun-lz.js implements the OpenLaszlo side of automated execution;
 autorun-browser.js implements browser support; and autorun-include.jsp
@@ -59,7 +73,7 @@ Each test cases should include autorun-lz.js via <script
 src="autorun-lz.js"/>.  If you have a library.lzx file with test
 scaffolding, you can place that directive there.
 
-== Behavioral testing
+=== Behavioral testing
 
 TODO
 
@@ -84,13 +98,13 @@ This lets you write things like this in a test case:
     .should.call(otherObject, 'method', 'some', 'arguments')
 
 
-lzmock.js
-lzspec.js
-lzunit-extensions.js -- adds assertNotEquals, assert[Not]Contains, and assertFasterThan to TestCase
-jsspec.js -- js-level support for lzspec (without OpenLaszlo dependencies)
-hopkit.js -- support file for jsspec and lzmock
+* lzmock.js
+* lzspec.js
+* lzunit-extensions.js -- adds assertNotEquals, assert[Not]Contains, and assertFasterThan to TestCase
+* jsspec.js -- js-level support for lzspec (without OpenLaszlo dependencies)
+* hopkit.js -- support file for jsspec and lzmock
 
-== Asynchronous testing
+=== Asynchronous testing
 
 TODO
 
