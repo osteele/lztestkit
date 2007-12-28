@@ -1,0 +1,8 @@
+* fix update to preview; ignore null
+* implement eventually.should
+* remove old stuff
+* create new expects()
+* fix the error reporting kludge in expects
+* more test cases, especially for hopkit
+* autorun should only return canvas files
+* can autorun recover from a non-canvas file?

@@ -1,0 +1,44 @@
+== LZTestKit
+
+This package extends lzunit with behavioral testing, asynchronous
+testing, and automated execution of a series of test applets.
+
+* Behavioral testing implements mocks, stubs, and expectations.  It's
+  a loose port of rspec to OpenLaszlo.
+
+* Asynchronous testing allows you to write a test case that isn't
+  considered complete when it returns.  If a test case creates a
+  callback function, the test case is only complete when the callback
+  function returns.  (Except if the callback function creates a
+  callback function, etc.)
+
+* Automated test execution runs all the test applets in a directory,
+  in series, in a single browser window, stopping if one of them has
+  an error.  It allows you to run all of a package's test cases from
+  the browser by visiting a single url, instead of clicking on each
+  one in turn.
+
+== Requirements
+* OpenLaszlo 3.4+ or 4.0.6+.  (Earlier versions might work, but aren't tested.)
+
+== Contents
+
+=== Behavioral testing
+
+=== Automated execution
+
+autorun-browser.js
+autorun-include.jsp
+autorun-lz.js
+
+=== Other Files
+
+The behavioural testing files use hopkitjs to define chains.  It's not
+necessary to use this file directly.
+
+== License
+
+LzTestKit is copyright (c) 2007 Oliver Steele.  It is open-source
+software, and may be redistributed under the terms of the MIT
+license. The text of this licence is included in the LzTestKit
+distribution.
