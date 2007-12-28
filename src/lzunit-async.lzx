@@ -1,0 +1,218 @@
+<!-- Copyright 2007 by Oliver Steele.  Released under the MIT License. -->
+<library>
+  <include href="lzunit"/>
+
+  <!--
+      An instance of this class calls its setupOnce() method before it
+      runs its test suite, if such a method exists.  It passes the
+      method an argument c; if the method returns this argument then
+      the test suite is not run until c() is called.  This provides a
+      mechanism for running a test suite once an asynchronous setup
+      procedure is complete.
+
+      AsncTestSuite can be used independently of AsyncTestCase, and
+      vice versa.
+  -->
+  <class name="AsyncTestSuite" extends="TestSuite">
+    <method name="initSuite"><![CDATA[
+      var self = this;
+      var result = this['setupOnce'] && this.setupOnce(done);
+      delete this.setupOnce;
+      if (result != done)
+        return super.initSuite();
+      function done() {
+        TestSuite.prototype.initSuite.call(self);
+      };
+    ]]></method>
+  </class>
+
+  <!--
+      Aynchronous test case runner, for use with lzunit.  This class
+      can run tests that aren't complete when their initial methods
+      return, but instead continue into code that is called back
+      through delegates and callback functions.  It provides these
+      methods with a special constructor token: if a method or
+      callback uses the constructor token to create a delegate or to
+      wrap a callback function (collectively, a 'continuation'), the
+      test suite considers the test case to be running until a
+      continuation returns without itself using the token to
+      recursively create another continuation.
+
+      A method or callback can overwrite the DWIMishness of this
+      automatic detection that is based on whether a function creates
+      a continuation within its dynamic extent, by explicitly invoking
+      the c.done() method of the token to indicate that the test case
+      is to be considered complete when the current call completes
+      (even if the call created a further callback); or its
+      c.suspend() method to indicate that the test case is not
+      complete (even if the call did not create a further callback).
+
+      Callbacks should be created by applying the continuation token
+      to a Function to create a wrapped Function, or to a context
+      object and a method name to create an LzDelegate.  Functions and
+      delegates that are created this way are run with the fluid
+      bindings of the test suite runner, which otherwise go out of
+      scope after the original return; and they terminate the test on
+      return unless they return the token.  A function (but not a
+      delegate) that is created in this way is passed the test case as
+      its context object, so that e.g. this.assertEquals() is in
+      scope.  Delegates are on their own to capture a reference to the
+      test case.
+
+      The intent is to allow lzunit to run asynchronous tests, which
+      are not complete until a delegate or callback has been called.
+      A typical usage pattern is the following test, which asserts
+      that setTimeout delays at least the requested amount of time:
+        <method name="testSetTimeout" args="c">
+          var interval = 1000,
+              startTime = new Date;
+          // c(function(){...}) is equivalent to function(){...}
+          // except that it re-enters the dynamic bindings of the
+          // test case.
+          setTimeout(c(function() {
+            var endTime = new Date;
+            assertTrue(endTime - startTime >= interval);
+          }), interval);
+        </method>
+
+     The test case associated with a test* method that does not
+     reference the continuation token is considered complete when it
+     returns.  This class is therefore upwards-compatible with
+     TestCase.
+  -->
+  <class name="AsyncTestCase" extends="TestCase">
+    <method name="runTest" args="name"><![CDATA[
+      // test* methods return false if they haven't terminated, and
+      // receive an argument to call with arguments to construct a
+      // a continuation delegate, and with no arguments to signal
+      // termination.
+      t('run');
+      var self = this,
+          fn = this[name || this.name],
+          savedState = null,
+          created = false,
+          suspended = false,
+          completed = false;
+      c.done = done;
+      c.suspend = function() { t('suspend'); suspended = true }
+      // capture it so that calls to `sequence` will work
+      this._asyncC = c;
+      fn.call(this, c);
+      if (completed || !created && !suspended)
+        return;
+      var testSuite = this.parent,
+          capturedEvents = [],
+          capturingReportSourceWarning = $reportSourceWarning;
+      savedState = {
+        runNextTest: testSuite.runNextTest,
+        ontestfinish: testSuite.ontestfinish
+      },
+      asynchronousTests || Debug.error('asynchronousTests required');
+      // don't run the next test until this one has released the token
+      testSuite.runNextTest = function() {}
+      testSuite.ontestfinish = {sendEvent: function(arguments) {
+        capturedEvents.push(Array.prototype.slice.call(arguments, 0));
+      }};
+      // this will in general be called in the scope of fn.call() above,
+      // before setup()
+      function c(context, name, sender, eventName) {
+        self._asyncC = c;
+        if (!arguments.length) {
+          done();
+          return;
+        }
+        suspended = true;
+        var fn = function() {
+          // return from runTest() through run() sets this back, so restore
+          // it on subsequent entry
+          var state = {rsw:$reportSourceWarning, cr:created, co:completed, su:suspended};
+          created = suspended = completed = false;
+          if (savedState) $reportSourceWarning = capturingReportSourceWarning;
+          arguments.length > 2
+            ? context[name].apply(name, arguments)
+            : context.apply(self, arguments);
+          $reportSourceWarning = state.rsw;
+          if (completed || !created && !suspended)
+            done();
+          created = state.cr;
+          completed = state.co;
+          suspected = state.su;
+          return result;
+        }
+        if (arguments.length > 1)
+          fn = new LzDelegate({run:fn}, 'run');
+        sender && this.register(sender, eventName);
+        return fn;
+      }
+      function done() {
+        t('done');
+        // If a function created via c() is called in the scope of the original
+        // run, we don't need to do anything special to run it, but we do want
+        // to make a note to exit when the test method exits.  This can happens
+        // if the test method passes a funarg to a function that can call it
+        // either synchronously or asynchronously.
+        if (!savedState) {
+          completed = true;
+          return;
+        }
+        // restore state
+        testSuite.runNextTest = savedState.runNextTest;
+        testSuite.ontestfinish = savedState.ontestfinish;
+        // send queued events
+        var event = testSuite.ontestfinish;
+        for (var i = 0; i < capturedEvents.length; i++)
+          event.sendEvent.apply(event, capturedEvents[i]);
+        // run the next test, since this was intercepted
+        testSuite.runNextTest();
+      }
+      function t(verb) {
+        0 && Debug.write(verb, name);
+      }
+    ]]></method>
+
+    <!-- Call each argument asynchronously in turn.  The return value
+         of this function is a continuation token.  When a function in
+         the argument list calls the continuation token, the next
+         function is invoked. -->
+    <method name="sequentially"><![CDATA[
+      var self = this,
+          fns = Array.prototype.slice.call(arguments, 0),
+          c = this._asyncC;
+      setTimeout(c(next), 10);
+      return next;
+      function next() {
+        fns.length ? c.suspend() : c.done();
+        var fn = fns.shift() || function() {Debug.error('Concurrent.sequence: no next function')};
+        return fn.apply(self, arguments);
+      }
+    ]]></method>
+
+    <!-- Call each list of functions concurrently; once they are all
+         done, call the functions in the next list. -->
+    <method name="sequentially_merge"><![CDATA[
+      var self = this,
+          functionSets = Array.prototype.slice.call(arguments, 0),
+          pending = 0;
+          c = this._asyncC;
+      setTimeout(c(next), 10);
+      return next;
+      function next() {
+        if (--pending >= 0)
+          return;
+        if (!functionSets.length)
+          return c.done();
+        c.suspend();
+        var fns = functionSets.shift();
+        if (typeof fns == 'function') fns = [fns];
+        for (var i = 0; i < fns.length; i++)
+          fns[i].call(self);
+      }
+    ]]></method>
+    <handler name="oninit">
+      var self = this;
+      sequentially.merge = function() {
+        return sequentially_merge.apply(self, arguments);
+      }
+    </handler>
+  </class>
+</library>

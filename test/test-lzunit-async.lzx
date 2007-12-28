@@ -1,0 +1,57 @@
+<canvas debug="true">
+  <script src="../../osutils/src/string-utils.js"/>
+  <include href="../src/lzunit-async.lzx"/>
+  <script src="../src/autorun-lz.js"/>
+
+  <TestSuite>
+    <AsyncTestCase>
+        <method name="testSetTimeout" args="c">
+          var interval = 1000,
+              startTime = new Date;
+          // c(function(){...}) is equivalent to function(){...}
+          // except that it re-enters the dynamic bindings of the
+          // test case.
+          Debug.write('testSetTimeout 1');
+          setTimeout(c(function() {
+            var endTime = new Date;
+            Debug.write('testSetTimeout 2 (done)');
+            assertTrue(endTime - startTime >= interval);
+          }), interval);
+        </method>
+
+        <method name="testSequentially" args="c">
+          var c = sequentially(
+            function() {
+              Debug.write('testSequentially 1');
+              c();
+            },
+            function() {
+              Debug.write('testSequentially 2');
+              c();
+            },
+            function() {
+              this.assertTrue(true);
+              Debug.write('testSequentially 3 (done)');
+            }
+          )
+        </method>
+
+        <method name="testSequentiallyMerge" args="c">
+          var c = sequentially.merge(
+            [
+              function() {Debug.write('testSequentiallyMerge 1a'); c()},
+              function() {Debug.write('testSequentiallyMerge 1b') ;c()}
+            ],
+            [
+              function() {Debug.write('testSequentiallyMerge 2a'); c()},
+              function() {Debug.write('testSequentiallyMerge 2b') ;c()}
+            ],
+            function() {
+              this.assertTrue(true);
+              Debug.write('testSequentiallyMerge 3 (done)');
+            }
+          )
+        </method>
+    </AsyncTestCase>
+  </TestSuite>
+</canvas>

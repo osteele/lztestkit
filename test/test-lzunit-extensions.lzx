@@ -1,0 +1,21 @@
+<!-- Copyright 2007 by Laszlo Systems, Inc.  All rights reserved. -->
+<canvas debug="true">
+  <include href="lzunit"/>
+  <script src="../src/lzunit-extensions.js"/>
+
+<TestSuite>
+  <TestCase>
+    <method name="testFasterThan">
+      this.assertFasterThan(100, 50);
+      this.assertFasterThan(100, 100);
+      this.assertFasterThan(100, 50, 'message');
+    </method>
+
+    <method name="testNotFasterThan">
+      this.assertFasterThan(100, 200);
+      this.assertFasterThan(100, 200, 'message');
+    </method>
+  </TestCase>
+</TestSuite>
+</canvas>
+
