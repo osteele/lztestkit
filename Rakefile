@@ -26,6 +26,7 @@ task 'build/index.html' => 'README' do |t|
   sh "rdoc --one-file -n build/index.html README"
   url = "http://osteele.com/sources/openlaszlo/#{ARCHIVE_NAME}"
   content = File.read(t.name).
+    sub(/<title>.*?<\/title>/, '<title>LzTestKit</title>').
     sub(/<h2>File:.*?<\/h2>/, '').
     sub(/<h2>Classes<\/h2>/, '').
     sub(/<table.*?<\/table>/m, '').

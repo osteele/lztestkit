@@ -1,31 +1,32 @@
-== LZTestKit
+= LZTestKit
 
 This package extends lzunit with behavioral testing, asynchronous
-testing, test selection, and automated test sequencing.
+test support, test case selection, and automated test sequencing.
 
-* Test selection runs a single test case within a test applet, without
-  modifying the sources.  (You supply the name of the test case as a
-  query parameter in the application URL.)  It allows you to use your
-  test applet as your debugging scaffolding, without running a lot of
-  code that you aren't interested in.
+* <b>Test case selection</b> runs a single test case within a test
+  applet, without modifying the sources.  (You supply the name of the
+  test case as a query parameter in the application URL.)  It allows
+  you to use your test applet as your debugging scaffolding, without
+  running a lot of code that you aren't interested in.
 
-* Automated test sequencing runs all the test applets in a directory,
-  in series, in a single browser window, stopping if one of them has
-  an error.  It allows you to run all of a package's test cases from
-  the browser by visiting a single url, instead of navigating to each
-  url in turn.
+* <b>Automated test sequencing</b> runs all the test applets in a
+  directory, in series, in a single browser window, stopping if one of
+  them has an error.  It allows you to run all of a package's test
+  cases from the browser by visiting a single url, instead of
+  navigating to each url in turn.
 
-* Behavioral testing implements mocks, stubs, and expectations.  It
-  allows you to *test* one class, while *stubbing* the classes that it
-  depends on.  You can even verify that the tested class makes
-  functions that you expect it to.  This is a loose port of rspec to
+* <b>Behavioral testing</b> implements mocks, stubs, and expectations.
+  It allows you to *test* one class, while *stubbing* the classes that
+  it depends on.  You can even verify that the tested class makes
+  functions thatyou expect it to.  This is a loose port of rspec to
   OpenLaszlo.
 
-* Asynchronous testing allows you to write a test case that isn't
-  considered complete when it returns.  If a test case creates a
-  callback function, the test case is only complete when the callback
-  function returns.  (Except if the callback function creates a
-  callback function, etc.)
+* <b>Asynchronous test support</b> allows you to write a test case
+  that is only considered complete when the callback functions or
+  delegates that it defines return.  If a test case creates a callback
+  function, the test case is only complete when the callback function
+  returns.  (Except if the callback function creates a callback
+  function, etc.)
 
 == Requirements
 
@@ -37,7 +38,7 @@ might work, but aren't tested.)
 * Download the latest version from {download-location}.
 
 * Unpack it into your OpenLaszlo webapp directory; for example, at
-  ${OPENLASZLO_HOME}/Server/lps-3.4.0/lztestkit.
+  <tt>${OPENLASZLO_HOME}/Server/lps-3.4.0/lztestkit</tt>.
 
 * Visit e.g. http://127.0.0.1:8080/openlaszlo-3.4.0/lztestkit/examples
   and http://127.0.0.1:8080/openlaszlo-3.4.0/lztestkit/test.  You
@@ -46,32 +47,44 @@ might work, but aren't tested.)
 
 == Features
 
-=== Test selection
+=== Test case selection
 
-Include lzunit-extensions.js in your application (or library.lzx,
-which includes this).  Then, include the testCase=<testCaseName> query
-parameter in the URL that you use to open the application, where
-<testCaseName> is the name of the test case.  Only this test case will
-execute.
+If a test application is compiled with support for test case selection, you
+can invoke it with a <tt>testCase=<em>{testCaseName}</em></tt> query parameter
+to run only the test case named <em>{testCaseName}</em>.
 
-See the example in examples/test-selection.lzx.
+Include <tt>lzunit-extensions.js</tt> in your application (or include
+<tt>library.lzx</tt>, which includes this).  Then, include the
+testCase={testCaseName} query parameter in the URL that you use to
+open the application, where {testCaseName} is the name of the test
+case.  Only this test case will execute.
 
-=== Automated test sequencing execution
+See the example in <tt>examples/test-selection.lzx</tt>.
 
-autorun-lz.js implements the OpenLaszlo side of automated execution;
-autorun-browser.js implements browser support; and autorun-include.jsp
-is a JSP include that lists the files in the current directory for the
-browser-side code to look at.
+=== Automated test sequencing
 
-Copy test/autorun/index.jsp into your test directory, and update the
-includes at the top of the file to reflect the paths to the lztestkit
-src and lib subdirectories.  By default, this file will run files in
-its directory that match /test-*.lzx/; this is a configuration
-parameter that it should be obvious how to change.
+Copy <tt>test/autorun/index.jsp</tt> into your test directory to run
+all the test applications in that directory within a single browser
+window, without user interaction.
 
-Each test cases should include autorun-lz.js via <script
-src="autorun-lz.js"/>.  If you have a library.lzx file with test
-scaffolding, you can place that directive there.
+Copy <tt>test/autorun/index.jsp</tt> into your test directory, and
+update the includes at the top of the file to reflect the paths to the
+lztestkit <tt>src</tt> and <tt>lib</tt> subdirectories.  By default,
+this file will run files in its directory that match /test-*.lzx/;
+this is a configuration parameter that it should be obvious how to
+change.
+
+Each test cases should include <tt>autorun-lz.js</tt> via <script
+src="autorun-lz.js"/>.  If you have a <tt>library.lzx</tt> file with
+test scaffolding, you can place that directive there.
+
+==== Support files
+<tt>autorun-lz.js</tt>:: implements the OpenLaszlo side of automated execution
+<tt>autorun-browser.js</tt>:: implements browser support
+<tt>autorun-include.jsp</tt>:: is a JSP include that embeds the files in the current directory into the generated HTML for the index page
+<tt>jquery-1.2.1.min.js</tt>:: is the jQuery library.  I didn't write this! but the browser support file needs it
+<tt>swfobject.js</tt>:: is the swfobject library.  I didn't write this! but the browser support file needs it
+
 
 === Behavioral testing
 
@@ -97,27 +110,46 @@ This lets you write things like this in a test case:
   constructing('MyClass', 'initarg')
     .should.call(otherObject, 'method', 'some', 'arguments')
 
+==== Implementation
 
-* lzmock.js
-* lzspec.js
-* lzunit-extensions.js -- adds assertNotEquals, assert[Not]Contains, and assertFasterThan to TestCase
-* jsspec.js -- js-level support for lzspec (without OpenLaszlo dependencies)
-* hopkit.js -- support file for jsspec and lzmock
+<tt>lzmock.js</tt>:: TODO
+<tt>lzspec.js</tt>:: TODO
+<tt>lzunit-extensions.js</tt>:: adds <tt>assertNotEquals</tt>, <tt>assert[Not]Contains</tt>, and <tt>assertFasterThan</tt> methods to <tt>TestCase</tt>
+<tt>jsspec.js</tt>::  js-level support for lzspec (without OpenLaszlo dependencies)
+<tt>hopkit.js</tt>:: support file for jsspec and lzmock
 
-=== Asynchronous testing
+=== Asynchronous test support
 
 TODO
 
-For now, see test/test-lzunit-async.lzx.  The new methods are also
-copiously documented in src/lzunit-async.lzx.
+This features allows lzunit to run asynchronous tests, which are not
+complete until a delegate or callback has been called.  A typical
+usage pattern is the following test, which asserts that setTimeout
+delays at least the requested amount of time:
+
+  <method name="testSetTimeout" args="c">
+    var interval = 1000,
+        startTime = new Date;
+    // c(function(){...}) is equivalent to function(){...}
+    // except that it re-enters the dynamic bindings of the
+    // test case.
+    setTimeout(c(function() {
+      var endTime = new Date;
+      assertTrue(endTime - startTime >= interval);
+    }), interval);
+  </method>
+
+For now, see <tt>test/test-lzunit-async.lzx</tt>.  The new methods are
+also copiously documented in <tt>src/lzunit-async.lzx</tt>.
 
 == Support Files
 
-The browser support for autorun relies on jquery and swfobject.  I've
-included versions of these in the src directory.
+The browser support for autorun relies on jQuery and swfobject.  I've
+included versions of these in the <tt>src</tt> directory.
 
-The behavioural testing files use hopkit.js to define chains.  It's not
-necessary to use this file directly.
+The behavioral testing files use hopkit.js to define chains.
+<tt>hopkit</tt> isn't otherwise ready for general release; and it's
+not necessary to use this file directly.
 
 == License
 

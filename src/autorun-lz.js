@@ -1,9 +1,15 @@
 /* Copyright 2007 by Oliver Steele.  Available under the MIT License. */
 
+// OL 3.4 compatibility
+TestSuite.addProperty != Object.addProperty
+    || (TestSuite.addProperty = function(name, value) {this.prototype[name] = value});
 TestSuite.prototype.sendLogDataWithoutBrowserJS =
     TestSuite.prototype.sendLogData;
 
 TestSuite.addProperty('sendLogData', function(_, message) {
+    // OL 3.4
+    if (message instanceof XML)
+        message = 'failures: ' + message.firstChild.attributes.failures;
     var suiteCount = 0;
     for (var i = 0; i < canvas.subviews.length; i++)
         if (canvas.subviews[i] instanceof TestSuite)
