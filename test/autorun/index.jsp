@@ -16,8 +16,8 @@
     </style>
   </head>
   <body>
-    <%@ include file="../../src/autorun-include.jsp" %>
     <script type="text/javascript">
+      var files = <%@ include file="../../src/list-files.jsp" %>;
       LzTestRunner.run({
         files: files,
         match: /(test-.*)\.lzx/,
