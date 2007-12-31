@@ -1,4 +1,4 @@
-RELEASE_VERSION = '0.9a1'
+RELEASE_VERSION = '0.9a2'
 ARCHIVE_NAME = "lztestkit-#{RELEASE_VERSION}.tgz"
 IGNORE = Dir['**/#*#'] + Dir['**/.#*'] + Dir['build']
 
@@ -35,7 +35,7 @@ task 'build/index.html' => 'README' do |t|
   #jsrdoc 'bezier.js', t.name, 'JavaScript Beziers'
 end
 
-SHARED_FILES = %w(autorun-browser.js autorun-include.jsp autorun-lz.js hopkit.js jsspec.js lzmock.js lzspec.js lzunit-async.lzx lzunit-extensions.js)
+SHARED_FILES = %w(autorun-browser.js autorun-lz.js hopkit.js jsspec.js list-files.jsp lzmock.js lzspec.js lzunit-async.lzx lzunit-extensions.js)
 
 # TODO: sync sequencing.js, hopkit.js with jsutils
 
