@@ -24,6 +24,20 @@
         TestSuite.prototype.initSuite.call(self);
       };
     ]]></method>
+
+    <method name="runNextTest"><![CDATA[
+      if (this['_running'])
+        return;
+      if (this['_finished'])
+        return;
+      super.runNextTest();
+      if (this.nextCase > this.tests.length) {
+        this['synchronousRunNextTest']
+          ? this.synchronousRunNextTest()
+          : super.runNextTest();
+        this._finished = true;
+      }
+    ]]></method>
   </class>
 
   <!--
@@ -103,52 +117,61 @@
       var testSuite = this.parent,
           capturedEvents = [],
           capturingReportSourceWarning = $reportSourceWarning;
+      asynchronousTests || Debug.error('asynchronousTests required');
+      // monkey-patch testsuite with the async runner
+      if (!testSuite['synchronousRunNextTest']) {
+        testSuite.synchronousRunNextTest = testSuite.runNextTest;
+        testSuite.runNextTest = AsyncTestSuite.prototype.runNextTest;
+      }
+      testSuite._running = true;
+      // don't run the next test until this one has released the token
       savedState = {
-        runNextTest: testSuite.runNextTest,
         ontestfinish: testSuite.ontestfinish
       },
-      asynchronousTests || Debug.error('asynchronousTests required');
-      // don't run the next test until this one has released the token
-      testSuite.runNextTest = function() {}
       testSuite.ontestfinish = {sendEvent: function(arguments) {
         capturedEvents.push(Array.prototype.slice.call(arguments, 0));
       }};
+      return;
+
       // this will in general be called in the scope of fn.call() above,
       // before setup()
-      function c(context, name, sender, eventName) {
+      function c(fn) {
         self._asyncC = c;
-        if (!arguments.length) {
-          done();
-          return;
-        }
+        // with no arguments, this means we're done
+        if (!arguments.length)
+          return done();
         suspended = true;
-        var fn = function() {
+        if (fn instanceof LzDelegate) {
+          fn = function() { return fn.exec.apply(fn, arguments) }
+          wrapper = new LzDelegate({run:wrapper}, 'run');
+        }
+        return wrapper;
+
+        function wrapper() {
           // return from runTest() through run() sets this back, so restore
           // it on subsequent entry
           var state = {rsw:$reportSourceWarning, cr:created, co:completed, su:suspended};
           created = suspended = completed = false;
           if (savedState) $reportSourceWarning = capturingReportSourceWarning;
-          arguments.length > 2
-            ? context[name].apply(name, arguments)
-            : context.apply(self, arguments);
+          result = fn.apply(this, arguments);
           $reportSourceWarning = state.rsw;
           if (completed || !created && !suspended)
             done();
           created = state.cr;
           completed = state.co;
           suspected = state.su;
-          return result;
+          // workaround for ridiculous OL runtime warning
+          return typeof result == 'undefined' ? undefined : result;
         }
-        if (arguments.length > 1)
-          fn = new LzDelegate({run:fn}, 'run');
-        sender && this.register(sender, eventName);
-        return fn;
       }
       function done() {
         t('done');
+        if (done['called']) return;
+        done.called = true;
+        delete testSuite._running;
         // If a function created via c() is called in the scope of the original
         // run, we don't need to do anything special to run it, but we do want
-        // to make a note to exit when the test method exits.  This can happens
+        // to make a note to exit when the test method exits.  This can happen
         // if the test method passes a funarg to a function that can call it
         // either synchronously or asynchronously.
         if (!savedState) {
@@ -156,7 +179,6 @@
           return;
         }
         // restore state
-        testSuite.runNextTest = savedState.runNextTest;
         testSuite.ontestfinish = savedState.ontestfinish;
         // send queued events
         var event = testSuite.ontestfinish;
@@ -173,26 +195,16 @@
     <!-- Call each argument asynchronously in turn.  The return value
          of this function is a continuation token.  When a function in
          the argument list calls the continuation token, the next
-         function is invoked. -->
+         function is invoked.
+
+         If an argument is an Array of functions, all the functions in
+         the array are invoked in a single frame, and the next
+         function (or functions) are invoked only once they have all
+         returned. -->
     <method name="sequentially"><![CDATA[
       var self = this,
-          fns = Array.prototype.slice.call(arguments, 0),
-          c = this._asyncC;
-      setTimeout(c(next), 10);
-      return next;
-      function next() {
-        fns.length ? c.suspend() : c.done();
-        var fn = fns.shift() || function() {Debug.error('Concurrent.sequence: no next function')};
-        return fn.apply(self, arguments);
-      }
-    ]]></method>
-
-    <!-- Call each list of functions concurrently; once they are all
-         done, call the functions in the next list. -->
-    <method name="sequentially_merge"><![CDATA[
-      var self = this,
           functionSets = Array.prototype.slice.call(arguments, 0),
-          pending = 0;
+          pending = 0, // how many fns from the current set are outstanding
           c = this._asyncC;
       setTimeout(c(next), 10);
       return next;
@@ -200,16 +212,20 @@
         if (--pending > 0)
           return;
         if (!functionSets.length)
-          return;
-        c.suspend();
+          return c.done();
+        // fetch the next set of functions to run in parallel
         var fns = functionSets.shift();
-        if (typeof fns == 'function') fns = [fns];
+        if (typeof fns == 'function')
+          fns = [fns];
         pending = fns.length;
+        // run them all
+        if (typeof fns == 'function') fns = [fns];
         for (var i = 0; i < fns.length; i++)
           fns[i].call(self);
-        functionSets.length || c.done();
+        functionSets.length && c.suspend();
       }
     ]]></method>
+
     <handler name="oninit">
       var self = this;
       sequentially.merge = function() {

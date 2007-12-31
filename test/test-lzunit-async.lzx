@@ -3,52 +3,109 @@
   <include href="../src/lzunit-async.lzx"/>
   <script src="../src/autorun-lz.js"/>
 
+  <script><![CDATA[
+    var watchpointHistory = [];
+    function note(name) {
+      watchpointHistory.push(name);
+      //Debug.write('observed', name);
+    }
+    function checkWatchpointSequences() {
+      var all = watchpointHistory.join(' '),
+          padded = ' '+ all +' ',
+          failed = false;
+      Debug.write('Watchpoints occurred in the order', all);
+      assertContiguousSequence('st1', 1, 2);
+      assertContiguousSequence('st2', 1, 2, 3);
+      assertContiguousSequence('s1', 1, 2, 3);
+      assertContiguousSequence('s2', 1, 2, 3);
+      assertContiguousSequence('sp', '1a', '1b', '2a', '2b', 3);
+      failed || Debug.write('All watchpoint sequences matched.');
+      function assertContiguousSequence(base) {
+        var names = [];
+        for (var i = 1; i < arguments.length; i++) {
+          var name = base + '.' + arguments[i];
+          if (padded.indexOf(' '+name+' ') < 0)
+            return (failed++, Debug.error(name, 'did not occur'));
+          names.push(name);
+        }
+        var seq = names.join(' ');
+        //Debug.write('test', seq, all.indexOf(seq));
+        padded.indexOf(' '+seq+' ') >= 0
+          || (failed++, Debug.error(seq, 'did not occur in order'));
+      }
+    }
+  ]]></script>
+
   <TestSuite>
+    <handler name="onsuitefinish">
+      note('done');
+      checkWatchpointSequences();
+    </handler>
+
     <AsyncTestCase>
       <method name="testSetTimeout" args="c">
-        var interval = 1000,
-            startTime = new Date;
-        // c(function(){...}) is equivalent to function(){...}
-        // except that it re-enters the dynamic bindings of the
-        // test case.
-        Debug.write('testSetTimeout 1');
+        note('st1.1');
         setTimeout(c(function() {
-          var endTime = new Date;
-          Debug.write('testSetTimeout 2 (done)');
-          assertTrue(endTime - startTime >= interval);
-        }), interval);
+          note('st1.2');
+        }), 100);
       </method>
 
-      <method name="testSequentially" args="c">
-        var c = sequentially(
+      <method name="testSetTimeout2" args="c">
+        note('st2.1');
+        setTimeout(c(function() {
+          note('st2.2');
+          setTimeout(c(function() {
+            note('st2.3');
+          }), 100);
+        }), 100);
+      </method>
+
+      <method name="testSequentiallyWithNext" args="c">
+        var next = sequentially(
           function() {
-            Debug.write('testSequentially 1');
-            c();
+            note('s1.1');
+            next();
           },
           function() {
-            Debug.write('testSequentially 2');
-            c();
+            note('s1.2');
+            next();
           },
           function() {
-            this.assertTrue(true);
-            Debug.write('testSequentially 3 (done)');
+            note('s1.3');
+            next();
           }
         )
       </method>
 
-      <method name="testSequentiallyMerge" args="c">
-        var c = sequentially.merge(
+      <method name="testSequentiallyWithoutNext" args="c">
+        var next = sequentially(
+          function() {
+            note('s2.1');
+            next();
+          },
+          function() {
+            note('s2.2');
+            next();
+          },
+          function() {
+            note('s2.3');
+          }
+        )
+      </method>
+
+      <method name="testSequentiallyParallel" args="c">
+        var next = sequentially(
           [
-            function() {Debug.write('testSequentiallyMerge 1a'); c()},
-            function() {Debug.write('testSequentiallyMerge 1b') ;c()}
+            function() {note('sp.1a'); next()},
+            function() {note('sp.1b') ;next()}
           ],
           [
-            function() {Debug.write('testSequentiallyMerge 2a'); c()},
-            function() {Debug.write('testSequentiallyMerge 2b') ;c()}
+            function() {note('sp.2a'); next()},
+            function() {note('sp.2b') ;next()}
           ],
           function() {
-            this.assertTrue(true);
-            Debug.write('testSequentiallyMerge 3 (done)');
+            note('sp.3');
+            next();
           }
         )
       </method>
