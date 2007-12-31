@@ -1,0 +1,66 @@
+<!-- Copyright 2007 by Oliver Steele.  Available under the MIT License. -->
+<canvas debug="true">
+  <include href="../src/lzunit-async.lzx"/>
+  <script src="../src/autorun-lz.js"/>
+
+  <TestSuite>
+    <handler name="onsuitefinish">
+      Debug.write('done with test suite');
+    </handler>
+
+    <AsyncTestCase>
+      <method name="testSetTimeout" args="c">
+        Debug.write('testSetTimeout 1');
+        setTimeout(c(function() {
+          Debug.write('testSetTimeout 2 (done)');
+        }), 100);
+      </method>
+
+      <method name="testSetTimeout2" args="c">
+        Debug.write('testSetTimeout2 1');
+        setTimeout(c(function() {
+          Debug.write('testSetTimeout2 2');
+          setTimeout(c(function() {
+            Debug.write('testSetTimeout2 3 (done)');
+          }), 100);
+        }), 100);
+      </method>
+
+      <method name="testSequentially" args="c">
+        var next = sequentially(
+          function() {
+            Debug.write('testSequentially 1');
+            next();
+          },
+          function() {
+            Debug.write('testSequentially 2');
+            next();
+          },
+          function() {
+            this.assertTrue(true);
+            Debug.write('testSequentially 3 (done)');
+            next();
+          }
+        )
+      </method>
+
+      <method name="testSequentiallyParallel" args="c">
+        var next = sequentially(
+          [
+            function() {Debug.write('testSequentiallyParallel 1a'); next()},
+            function() {Debug.write('testSequentiallyParallel 1b') ;next()}
+          ],
+          [
+            function() {Debug.write('testSequentiallyParallel 2a'); next()},
+            function() {Debug.write('testSequentiallyParallel 2b') ;next()}
+          ],
+          function() {
+            this.assertTrue(true);
+            Debug.write('testSequentiallyParallel 3 (done)');
+            next();
+          }
+        )
+      </method>
+    </AsyncTestCase>
+  </TestSuite>
+</canvas>

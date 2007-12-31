@@ -141,7 +141,7 @@ delays at least the requested amount of time:
     }), interval);
   </method>
 
-For now, see <tt>test/test-lzunit-async.lzx</tt>.  The new methods are
+For now, see <tt>examples/test-lzunit-async.lzx</tt>.  The new methods are
 also copiously documented in <tt>src/lzunit-async.lzx</tt>.
 
 == Support Files

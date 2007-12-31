@@ -1,0 +1,27 @@
+<!-- Copyright 2007 by Oliver Steele.  Available under the MIT License. -->
+<canvas debug="true">
+  <include href="../src/lzunit-async.lzx"/>
+  <script src="../src/autorun-lz.js"/>
+
+  <TestSuite>
+    <handler name="onsuitefinish">
+      Debug.write('done with test suite');
+    </handler>
+
+    <AsyncTestCase>
+      <method name="testSetTimeout" args="c">
+        var startTime = new Date,
+            interval = 1000;
+        // c(function(){...}) is equivalent to function(){...}
+        // except that it re-enters the dynamic bindings of the
+        // test case.
+        Debug.write('testSetTimeout 1');
+        setTimeout(c(function() {
+          var endTime = new Date;
+          Debug.write('testSetTimeout 2 (done)');
+          assertTrue(endTime - startTime >= interval);
+        }), interval);
+      </method>
+    </AsyncTestCase>
+  </TestSuite>
+</canvas>

@@ -1,0 +1,35 @@
+<!-- Copyright 2007 by Oliver Steele.  Available under the MIT License. -->
+<canvas debug="true">
+  <include href="lzunit"/>
+  <script src="../src/lzunit-extensions.js"/>
+
+  <TestSuite>
+    <method name="setUp">
+      //Debug.write("This test is expected to fail.");
+    </method>
+
+    <TestCase>
+      <method name="testFasterThan">
+        var t0 = new Date;
+        // do something slow here...
+        var dt = new Date - t0;
+        this.assertFasterThan(100, dt, 'this should succeed');
+      </method>
+
+      <method name="testFasterThanShouldFail">
+        var t0 = new Date;
+        // do something slow here...
+        var dt = new Date - t0;
+        // for testing purposes modify dt to pretend
+        // that the slow thing really was slow
+        dt += 200;
+        this.assertFasterThan(100, dt, 'this should fail');
+      </method>
+    </TestCase>
+  </TestSuite>
+
+  <text id="instructions" fontsize="18" multiline="true" width="80%"
+        y="90" align="center" bgcolor="white">
+        testFasterThanShouldFail should fail
+  </text>
+</canvas>
