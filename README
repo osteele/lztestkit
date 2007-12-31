@@ -40,10 +40,12 @@ might work, but aren't tested.)
 * Unpack it into your OpenLaszlo webapp directory; for example, at
   <tt>${OPENLASZLO_HOME}/Server/lps-3.4.0/lztestkit</tt>.
 
-* Visit e.g. http://127.0.0.1:8080/openlaszlo-3.4.0/lztestkit/examples
-  and http://127.0.0.1:8080/openlaszlo-3.4.0/lztestkit/test.  You
-  should be able to click on the examples and tests in order to run
-  them.
+* Visit e.g. http://127.0.0.1:8080/openlaszlo-4.0.6/lztestkit/examples
+  and http://127.0.0.1:8080/openlaszlo-4.0.6/lztestkit/test.  (The
+  first part of the path will be different if you've got a different
+  version of OpenLaszlo, or if you've installed the servlet instead of
+  the server).  You should be able to click on the examples and tests
+  in order to run them.
 
 == Features
 
