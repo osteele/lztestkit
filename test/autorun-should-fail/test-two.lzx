@@ -5,7 +5,7 @@
   <TestSuite>
     <TestCase>
       <method name="testOne">
-        assertTrue(true);
+        assertTrue(false);
       </method>
     </TestCase>
   </TestSuite>

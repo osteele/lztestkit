@@ -5,15 +5,7 @@
     <script src="../../lib/jquery-1.2.1.min.js" type="text/javascript"></script>
     <script src="../../lib/swfobject.js" type="text/javascript"></script>
     <script src="../../src/autorun-browser.js" type="text/javascript"></script>
-    <style type="text/css">
-      body.running {margin:0}
-      body.success {background: green}
-      body.failed {margin:10px; background:red}
-      .status {font-size:24pt; text-align: center; padding-top:40px}
-      #file-list li {list-style-type:none; line-height:170%}
-      #file-list a {font-size:18pt; color:#4c4; text-decoration:none}
-      #file-list a:hover {text-decoration:underline}
-    </style>
+    <link href="../../src/autorun.css" type="text/css" rel="stylesheet" />
   </head>
   <body>
     <script type="text/javascript">

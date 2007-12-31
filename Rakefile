@@ -32,10 +32,10 @@ task 'build/index.html' => 'README' do |t|
     sub(/<table.*?<\/table>/m, '').
     sub('{download-location}', "<a href=\"#{url}\">#{url}</a>")
   File.open(t.name, 'w').write(content)
-  #jsrdoc 'bezier.js', t.name, 'JavaScript Beziers'
 end
 
-SHARED_FILES = %w(autorun-browser.js autorun-lz.js hopkit.js jsspec.js list-files.jsp lzmock.js lzspec.js lzunit-async.lzx lzunit-extensions.js)
+AUTORUN_FILES = %w{autorun-browser.js autorun-lz.js autorun.css list-files.jsp}
+SHARED_FILES = AUTORUN_FILES + %w(hopkit.js jsspec.js lzmock.js lzspec.js lzunit-async.lzx lzunit-extensions.js)
 
 # TODO: sync sequencing.js, hopkit.js with jsutils
 

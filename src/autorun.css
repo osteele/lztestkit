@@ -1,0 +1,9 @@
+/* Copyright 2007 by Oliver Steele.  Available under the MIT License. */
+
+body.running {margin:0}
+body.success {background: green}
+body.failed {margin:10px; background:red}
+.status {font-size:24pt; text-align: center; padding-top:40px}
+#file-list li {list-style-type:none; line-height:170%}
+#file-list a {font-size:18pt; color:#4c4; text-decoration:none}
+#file-list a:hover {text-decoration:underline}

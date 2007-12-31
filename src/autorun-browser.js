@@ -1,4 +1,7 @@
-/* Copyright 2007 by Oliver Steele.  Available under the MIT License. */
+/* Copyright 2007 by Oliver Steele.  Available under the MIT License.
+ *
+ * Browser support for the lztestkit autorun facility.
+ */
 
 window.console || (window.console={info:function(){}});
 
@@ -64,7 +67,10 @@ LzTestRunner.prototype = {
     failed: function(message) {
         this.status(message || 'failed');
         $('body').removeClass('running').addClass('failed');
-        this.current || this.message(message);
+        this.current
+            ? $('body').prepend(['<a href="', this.current.url, '">',
+                                 this.current.url, '</a>'].join(''))
+            : this.message(message);
     },
 
     message: function(message) {
