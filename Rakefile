@@ -1,12 +1,13 @@
 RELEASE_VERSION = '0.9a3'
 ARCHIVE_NAME = "lztestkit-#{RELEASE_VERSION}.tgz"
-IGNORE = Dir['**/#*#'] + Dir['**/.#*'] + Dir['build']
+IGNORE = Dir['**/#*#'] + Dir['**/.#*'] + Dir['build'] + Dir['build/**'] + Dir['working'] + Dir['working/**']
 
 task :archive => ARCHIVE_NAME
 task :docs => 'build/index.html'
 
-file ARCHIVE_NAME => Dir['**/*'] - ['Rakefile'] - Dir['*.tgz'] - IGNORE do |t|
-  sh "tar cfz #{t.name} #{t.prerequisites}"
+file ARCHIVE_NAME => Dir['**/*'] - Dir['*.tgz'] - IGNORE do |t|
+  puts t.prerequisites.sort.join("\n") if ENV['verbose']
+  sh "tar cfz #{t.name} #{t.prerequisites - ['Rakefile']}"
 end
 
 task :publish => [ARCHIVE_NAME, :docs] do
