@@ -1,40 +1,8 @@
 <!-- Copyright 2007 by Oliver Steele.  Available under the MIT License. -->
 <canvas debug="true">
   <include href="../src/lzunit-async.lzx"/>
+  <script src="../src/lzunit-extensions.js"/>
   <script src="../src/autorun-lz.js"/>
-
-  <script><![CDATA[
-    var watchpointHistory = [];
-    function note(name) {
-      watchpointHistory.push(name);
-      //Debug.write('observed', name);
-    }
-    function checkWatchpointSequences() {
-      var all = watchpointHistory.join(' '),
-          padded = ' '+ all +' ',
-          failed = false;
-      Debug.write('Watchpoints occurred in the order', all);
-      assertContiguousSequence('st1', 1, 2);
-      assertContiguousSequence('st2', 1, 2, 3);
-      assertContiguousSequence('s1', 1, 2, 3);
-      assertContiguousSequence('s2', 1, 2, 3);
-      assertContiguousSequence('sp', '1a', '1b', '2a', '2b', 3);
-      failed || Debug.write('All watchpoint sequences matched.');
-      function assertContiguousSequence(base) {
-        var names = [];
-        for (var i = 1; i < arguments.length; i++) {
-          var name = base + '.' + arguments[i];
-          if (padded.indexOf(' '+name+' ') < 0)
-            return (failed++, Debug.error(name, 'did not occur'));
-          names.push(name);
-        }
-        var seq = names.join(' ');
-        //Debug.write('test', seq, all.indexOf(seq));
-        padded.indexOf(' '+seq+' ') >= 0
-          || (failed++, Debug.error(seq, 'did not occur in order'));
-      }
-    }
-  ]]></script>
 
   <TestSuite>
     <handler name="onsuitefinish">
@@ -43,6 +11,26 @@
     </handler>
 
     <AsyncTestCase>
+      <method name="testImmediate" args="c">
+        note('i1.1');
+        var fn = c(function() { note('i1.2'); });
+        fn();
+      </method>
+
+      <method name="testThenImmediate" args="c">
+        note('i2.1');
+        var fn1 = c(function() { note('i2.2'); fn2(); });
+        var fn2 = c(function() { note('i2.3'); });
+        fn1.deferred();
+      </method>
+
+      <method name="testImmediateThen" args="c">
+        note('i3.1');
+        var fn1 = c(function() { note('i3.2'); fn2.deferred(); });
+        var fn2 = c(function() { note('i3.3'); });
+        fn1();
+      </method>
+
       <method name="testSetTimeout" args="c">
         note('st1.1');
         setTimeout(c(function() {
@@ -64,15 +52,15 @@
         var next = sequentially(
           function() {
             note('s1.1');
-            next();
+            next.deferred();
           },
           function() {
             note('s1.2');
-            next();
+            next.deferred();
           },
           function() {
             note('s1.3');
-            next();
+            next.deferred();
           }
         )
       </method>
@@ -81,11 +69,11 @@
         var next = sequentially(
           function() {
             note('s2.1');
-            next();
+            next.deferred();
           },
           function() {
             note('s2.2');
-            next();
+            next.deferred();
           },
           function() {
             note('s2.3');
@@ -96,19 +84,63 @@
       <method name="testSequentiallyParallel" args="c">
         var next = sequentially(
           [
-            function() {note('sp.1a'); next()},
-            function() {note('sp.1b') ;next()}
+            function() {note('sp.1a'); next.deferred()},
+            function() {note('sp.1b'); next.deferred()}
           ],
           [
-            function() {note('sp.2a'); next()},
-            function() {note('sp.2b') ;next()}
+            function() {note('sp.2a'); next.deferred()},
+            function() {note('sp.2b'); next.deferred()}
           ],
           function() {
             note('sp.3');
-            next();
+            next.deferred();
           }
         )
       </method>
     </AsyncTestCase>
   </TestSuite>
+  
+  <script><![CDATA[
+    // Call this function back asynchronously, in order to test asynchronous
+    // testing.  This method doesn't capture and replay the target or arguments
+    // as the corresponding functions in some frameworks do.
+    Function.prototype.deferred = function() {
+      var fn = this;
+      setTimeout(fn, 100);
+    }
+    var watchpointHistory = [];
+    function note(name) {
+      watchpointHistory.push(name);
+      //Debug.write('observed', name);
+    }
+    function checkWatchpointSequences() {
+      var all = watchpointHistory.join(' '),
+          padded = ' '+ all +' ',
+          failed = false;
+      Debug.write('Watchpoints occurred in the order', all);
+      if (global['testCase']) return;
+      assertContiguousSequence('i1', 1, 2);
+      assertContiguousSequence('i2', 1, 2, 3);
+      assertContiguousSequence('i3', 1, 2, 3);
+      assertContiguousSequence('st1', 1, 2);
+      assertContiguousSequence('st2', 1, 2, 3);
+      assertContiguousSequence('s1', 1, 2, 3);
+      assertContiguousSequence('s2', 1, 2, 3);
+      assertContiguousSequence('sp', '1a', '1b', '2a', '2b', 3);
+      failed || Debug.write('All watchpoint sequences matched.');
+      function assertContiguousSequence(base) {
+        var names = [];
+        for (var i = 1; i < arguments.length; i++) {
+          var name = base + '.' + arguments[i];
+          if (padded.indexOf(' '+name+' ') < 0)
+            return (failed++, Debug.error(name, 'did not occur'));
+          names.push(name);
+        }
+        var seq = names.join(' ');
+        //Debug.write('test', seq, all.indexOf(seq));
+        padded.indexOf(' '+seq+' ') >= 0
+          || (failed++, Debug.error(seq, 'did not occur in order'));
+      }
+    }
+  ]]></script>
 </canvas>

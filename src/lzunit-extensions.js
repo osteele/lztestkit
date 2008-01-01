@@ -42,7 +42,16 @@ Test.addProperty('assertFasterThan', function(expected, actual, message) {
 
 
 /*
- *
+ * Pending
+ */
+
+Test.addProperty('pending', function(message) {
+    Debug.write(['pending'].concat(arguments));
+});
+
+
+/*
+ * Test case selection
  */
 
 TestSuite.prototype.initSuiteWithoutRestriction =

@@ -103,63 +103,72 @@
       t('run');
       var self = this,
           fn = this[name || this.name],
-          savedState = null,
-          created = false,
-          suspended = false,
-          completed = false;
-      c.done = done;
-      c.suspend = function() { t('suspend'); suspended = true }
+          async = false,
+          pending = 0;
+      c.done = function() { pending = 0 };
+      c.suspend = function() { t('suspend'); pending++ }
       // capture it so that calls to `sequence` will work
       this._asyncC = c;
-      fn.call(this, c);
-      if (completed || !created && !suspended)
-        return;
       var testSuite = this.parent,
-          capturedEvents = [],
           capturingReportSourceWarning = $reportSourceWarning;
+      fn.call(this, c);
+      if (pending <= 0)
+        return;
       asynchronousTests || Debug.error('asynchronousTests required');
+      async = true;
       // monkey-patch testsuite with the async runner
       if (!testSuite['synchronousRunNextTest']) {
         testSuite.synchronousRunNextTest = testSuite.runNextTest;
         testSuite.runNextTest = AsyncTestSuite.prototype.runNextTest;
       }
-      testSuite._running = true;
       // don't run the next test until this one has released the token
-      savedState = {
-        ontestfinish: testSuite.ontestfinish
-      },
-      testSuite.ontestfinish = {sendEvent: function(arguments) {
-        capturedEvents.push(Array.prototype.slice.call(arguments, 0));
-      }};
+      testSuite._running = true;
+      // record events until we're done
+      testSuite.ontestfinish = {
+        capturedEvents: [],
+        sendEvent: function(arguments) {
+          this.capturedEvents.push(Array.prototype.slice.call(arguments, 0));
+        },
+        restore: function() {
+          var event = testSuite.ontestfinish = this.previousValue;
+          // send queued events
+          for (var i = 0; i < this.capturedEvents.length; i++)
+            event.sendEvent.apply(event, this.capturedEvents[i]);
+        },
+        previousValue: testSuite.ontestfinish
+      };
+      c.done = done;
       return;
 
-      // this will in general be called in the scope of fn.call() above,
-      // before setup()
       function c(fn) {
-        self._asyncC = c;
         // with no arguments, this means we're done
         if (!arguments.length)
-          return done();
-        suspended = true;
+          return c.done();
         if (fn instanceof LzDelegate) {
-          fn = function() { return fn.exec.apply(fn, arguments) }
+          // coerce the delegate into a fn (so that wrapper can call it),
+          // and coerce the wrapper into a delegate (so that the caller will
+          // see a wrapped delegate)
+          var delegate = fn;
+          fn = function() { return delegate.execute.apply(delegate, arguments) }
           wrapper = new LzDelegate({run:wrapper}, 'run');
         }
+        // we're creating a new callback, so we aren't done until one
+        // is called
+        pending++;
         return wrapper;
 
         function wrapper() {
+          // now we've discharged the pending status (unless the call
+          // to fn sets it again)
+          pending--;
           // return from runTest() through run() sets this back, so restore
           // it on subsequent entry
-          var state = {rsw:$reportSourceWarning, cr:created, co:completed, su:suspended};
-          created = suspended = completed = false;
-          if (savedState) $reportSourceWarning = capturingReportSourceWarning;
+          var state = {rsw:$reportSourceWarning}
+          if (async) $reportSourceWarning = capturingReportSourceWarning;
           result = fn.apply(this, arguments);
           $reportSourceWarning = state.rsw;
-          if (completed || !created && !suspended)
-            done();
-          created = state.cr;
-          completed = state.co;
-          suspected = state.su;
+          if (pending <= 0)
+            c.done();
           // workaround for ridiculous OL runtime warning
           return typeof result == 'undefined' ? undefined : result;
         }
@@ -168,22 +177,13 @@
         t('done');
         if (done['called']) return;
         done.called = true;
-        delete testSuite._running;
         // If a function created via c() is called in the scope of the original
         // run, we don't need to do anything special to run it, but we do want
         // to make a note to exit when the test method exits.  This can happen
         // if the test method passes a funarg to a function that can call it
         // either synchronously or asynchronously.
-        if (!savedState) {
-          completed = true;
-          return;
-        }
-        // restore state
-        testSuite.ontestfinish = savedState.ontestfinish;
-        // send queued events
-        var event = testSuite.ontestfinish;
-        for (var i = 0; i < capturedEvents.length; i++)
-          event.sendEvent.apply(event, capturedEvents[i]);
+        delete testSuite._running;
+        testSuite.ontestfinish.restore();
         // run the next test, since this was intercepted
         testSuite.runNextTest();
       }
@@ -206,8 +206,11 @@
           functionSets = Array.prototype.slice.call(arguments, 0),
           pending = 0, // how many fns from the current set are outstanding
           c = this._asyncC;
+      // defer the first call, so that it has access to the
+      // `next` return value (a la "threading the knot")
       setTimeout(c(next), 10);
       return next;
+
       function next() {
         if (--pending > 0)
           return;
@@ -222,7 +225,7 @@
         if (typeof fns == 'function') fns = [fns];
         for (var i = 0; i < fns.length; i++)
           fns[i].call(self);
-        functionSets.length && c.suspend();
+        functionSets.length ? c.suspend() : c.done();
       }
     ]]></method>
 

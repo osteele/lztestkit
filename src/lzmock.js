@@ -87,6 +87,9 @@ function MockObject(master) {
                         }
                     return typeof returnValue ? undefined : returnValue[0];
                 },
+                callback:function(value) {
+                    callback = Array.slice(arguments, 0);
+                },
                 calling:function(value) {
                     callback = Array.slice(arguments, 0);
                 },
@@ -104,13 +107,16 @@ function MockObject(master) {
     function addMethod(name) {
         self[name] = function() {
             Mock['trace'] && Debug.write('call', name, arguments);
+            // stop checking if we've already had an error
             if (error) return;
             var stub = stubs[name];
+            // if there's no expectation, or this isn't the next
+            // expectation, then it's only okay if there's a stub
             if (!expectations.length || expectations[0].name != name) {
-                if (stub)
-                    return stub.applyTo(arguments);
-                return fail(['unexpected call to ', master, '.', name, '()'].
-                            join(''));
+                return stub
+                    ? stub.applyTo(arguments)
+                    : fail(['unexpected call to ', master, '.', name, '()'].
+                           join(''));
             }
             var expectation = expectations.shift(),
                 actualArgs = arguments;
