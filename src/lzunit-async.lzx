@@ -1,4 +1,4 @@
-<!-- Copyright 2007 by Oliver Steele.  Released under the MIT License. -->
+<!-- Copyright 2007-2008 by Oliver Steele.  Released under the MIT License. -->
 <library>
   <include href="lzunit"/>
 
@@ -62,24 +62,23 @@
       complete (even if the call did not create a further callback).
 
       Callbacks should be created by applying the continuation token
-      to a Function to create a wrapped Function, or to a context
-      object and a method name to create an LzDelegate.  Functions and
-      delegates that are created this way are run with the fluid
-      bindings of the test suite runner, which otherwise go out of
-      scope after the original return; and they terminate the test on
-      return unless they return the token.  A function (but not a
-      delegate) that is created in this way is passed the test case as
-      its context object, so that e.g. this.assertEquals() is in
-      scope.  Delegates are on their own to capture a reference to the
-      test case.
+      to a Function to create a wrapped Function, or an instance of
+      LzDelegate to create an LzDelegate.  Functions and delegates
+      that are created this way are run with the fluid bindings of the
+      test suite runner, which otherwise go out of scope after the
+      original return; and they terminate the test on return unless
+      they return the token.  A function (but not a delegate) that is
+      created in this way is passed the test case as its context
+      object, so that e.g. this.assertEquals() is in scope.  Delegates
+      are on their own to capture a reference to the test case.
 
       The intent is to allow lzunit to run asynchronous tests, which
       are not complete until a delegate or callback has been called.
       A typical usage pattern is the following test, which asserts
       that setTimeout delays at least the requested amount of time:
         <method name="testSetTimeout" args="c">
-          var interval = 1000,
-              startTime = new Date;
+          var startTime = new Date,
+              interval = 1000;
           // c(function(){...}) is equivalent to function(){...}
           // except that it re-enters the dynamic bindings of the
           // test case.
@@ -107,13 +106,14 @@
           pending = 0;
       c.done = function() { pending = 0 };
       c.suspend = function() { t('suspend'); pending++ }
+      c.resume = function() { t('resume'); pending-- }
       // capture it so that calls to `sequence` will work
       this._asyncC = c;
       var testSuite = this.parent,
           capturingReportSourceWarning = $reportSourceWarning;
       fn.call(this, c);
       if (pending <= 0)
-        return;
+        return t('done (concurrent)');
       asynchronousTests || Debug.error('asynchronousTests required');
       async = true;
       // monkey-patch testsuite with the async runner
@@ -138,6 +138,7 @@
         previousValue: testSuite.ontestfinish
       };
       c.done = done;
+      t('waiting for callback');
       return;
 
       function c(fn) {
@@ -187,6 +188,7 @@
         // run the next test, since this was intercepted
         testSuite.runNextTest();
       }
+      // tracing for this method
       function t(verb) {
         0 && Debug.write(verb, name);
       }
@@ -208,12 +210,14 @@
           c = this._asyncC;
       // defer the first call, so that it has access to the
       // `next` return value (a la "threading the knot")
-      setTimeout(c(next), 10);
+      c.suspend();
+      setTimeout(next, 10);
       return next;
 
       function next() {
         if (--pending > 0)
           return;
+        c.resume();
         if (!functionSets.length)
           return c.done();
         // fetch the next set of functions to run in parallel
@@ -225,7 +229,7 @@
         if (typeof fns == 'function') fns = [fns];
         for (var i = 0; i < fns.length; i++)
           fns[i].call(self);
-        functionSets.length ? c.suspend() : c.done();
+        functionSets.length || c.done();
       }
     ]]></method>
 
@@ -236,4 +240,23 @@
       }
     </handler>
   </class>
+
+  <script>
+    // keep one initSuite from running until the previous has completed
+
+    // OL 3.4 compatibility
+    Test.addProperty != Object.addProperty
+      || (Test.addProperty = function(name, value) {this.prototype[name] = value});
+    var originalInitSuite = TestSuite.prototype.initSuite;
+    TestSuite.addProperty('initSuite', function() {
+      var self = this;
+      if (TestSuite['_running'])
+        return setTimeout(function() { self.initSuite() }, 100);
+      TestSuite._running = true;
+      new LzDelegate({run:function(){ TestSuite._running = false }}, 'run',
+                     this, 'onsuitefinish');
+      this.initSuite = originalInitSuite;
+      originalInitSuite.call(this);
+    });
+  </script>
 </library>
