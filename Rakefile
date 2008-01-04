@@ -1,6 +1,6 @@
 RELEASE_VERSION = '0.9a3'
 ARCHIVE_NAME = "lztestkit-#{RELEASE_VERSION}.tgz"
-IGNORE = Dir['**/#*#'] + Dir['**/.#*'] + Dir['build'] + Dir['build/**'] + Dir['working'] + Dir['working/**']
+IGNORE = Dir['**/#*#'] + Dir['**/.#*'] + Dir['build/**'] + Dir['working/**'] + %w{build working agenda.txt}
 
 task :archive => ARCHIVE_NAME
 task :docs => 'build/index.html'

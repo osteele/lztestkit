@@ -1,4 +1,4 @@
-/* Copyright 2007 by Oliver Steele.  Released under the MIT License. */
+/* Copyright 2007-2008 by Oliver Steele.  Released under the MIT License. */
 
 var Mock = {
     configure: function(options) {
@@ -72,6 +72,8 @@ function MockObject(master) {
     addMethods(master);
     typeof master == 'function' && addMethods(new master);
     this.mock = {expects: expector, verify: verify};
+    this['expects'] || (this.expects = expector);
+    this['verify'] || (this.verify = verify);
     this.stubs = this.stub = function(name) {
         var callback = null,
             returnValue = null,
@@ -297,6 +299,10 @@ var Expect = {
             return false;
         }
     }
+}
+
+function mock(object) {
+    return Mock.create.apply(Mock, arguments);
 }
 
 Array['slice'] || (Array.slice = (function() {

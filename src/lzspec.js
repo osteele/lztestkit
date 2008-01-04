@@ -1,4 +1,4 @@
-/* Copyright 2007 by Oliver Steele.  Released under the MIT License. */
+/* Copyright 2007-2008 by Oliver Steele.  Released under the MIT License. */
 
 JSSpec.define('send', function(sender, name) {
     Mock.expectEvent.apply(Mock, arguments);
@@ -39,7 +39,7 @@ ExpectValue.prototype = {
     a: function(klass) {
         this.testCase.assertTrue(this.value instanceof klass, klass);
     },
-    
+
     property: function(propertyName) {
         var actual = this.value,
             testCase = this.testCase;
@@ -60,7 +60,19 @@ ExpectValue.prototype = {
                 actual = value[propertyName];
             if (expect instanceof Date && expect/1 == actual/1)
                 expect = actual;
+            if (expect instanceof Array && actual instanceof Array
+                && equalArrays(expect, actual))
+                expect = actual;
             testCase.assertEquals(expect, actual, propertyName);
+        }
+
+        function equalArrays(a, b) {
+            if (a.length != b.length)
+                return false;
+            for (var ix = 0; ix < a.length; ix++)
+                if (a[ix] != b[ix])
+                    return false;
+            return true;
         }
     }
 }

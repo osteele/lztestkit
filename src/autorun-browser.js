@@ -1,4 +1,4 @@
-/* Copyright 2007 by Oliver Steele.  Available under the MIT License.
+/* Copyright 2007-2008 by Oliver Steele.  Available under the MIT License.
  *
  * Browser support for the lztestkit autorun facility.
  */
@@ -17,11 +17,15 @@ LzTestRunner.skip = 0;
 
 LzTestRunner.run = function(options) {
     var files = options.files,
+        match = options.match || /.*/,
+        exclude = options.exclude,
         matches = [];
     for (var i = 0; i < files.length; i++) {
-        if (files[i].match(options.match || /.*/)
-            && (options.exclude||[]).indexOf(files[i]) < 0)
-            matches.push(files[i]);
+        var file = files[i];
+        if (!file.match(/\.swf$/)
+            && file.match(match)
+            && (!exclude || !file.match(exclude)))
+            matches.push(file);
     }
     gRunner = new LzTestRunner(matches);
     gRunner.run();
