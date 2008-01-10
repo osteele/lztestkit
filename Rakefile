@@ -1,4 +1,4 @@
-RELEASE_VERSION = '0.9a3'
+RELEASE_VERSION = '0.9a4'
 ARCHIVE_NAME = "lztestkit-#{RELEASE_VERSION}.tgz"
 IGNORE = Dir['**/#*#'] + Dir['**/.#*'] + Dir['build/**'] + Dir['working/**'] + %w{build working agenda.txt}
 

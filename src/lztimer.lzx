@@ -3,27 +3,40 @@
   <class name="Timer" extends="node">
     <method name="init"><![CDATA[
       super.init();
-      this.setUp();
       LzBrowser.exec('window.receiveMessage = function(){(arguments.callee.queue=arguments.callee.queue||[]).push(Array.prototype.slice.call(arguments,0))}');
-      LzBrowser.loadScript(javascriptIncludesBase+"lztimer-browser.js");
-      LzBrowser.loadScript(javascriptIncludesBase+"jquery-1.2.1.min.js");
+      LzBrowser.loadScript(Timer.javascriptIncludesBase+"jquery-1.2.1.min.js");
+      LzBrowser.loadScript(Timer.lztestkitIncludesBase+"lztimer-browser.js");
       LzIdle.callOnIdle(new LzDelegate(this, 'runTimings'));
     ]]></method>
 
     <method name="runTimings"><![CDATA[
+      var self = this,
+          tests = [];
       for (var name in this)
-        if (typeof(this[name]) == 'function' && name.indexOf('time') == 0)
-          runTiming(name, this, this[name]);
-      function runTiming(name, self, fn) {
+        if (typeof(this[name]) == 'function' && name.indexOf('time') == 0) {
+          for (var ix = 0; ix < 5; ix++)
+            tests.push(name);
+          }
+      next();
+
+      function next() {
+        if (!tests.length) return;
+        var name = tests.shift();
+        runTiming(name);
+      }
+      function runTiming(name) {
         LzBrowser.exec('window.status="Running '+name+'"');
+        self.setUp();
         var t0 = new Date;
-        self[name](done);
-        done();
-        
+        var result = self[name](done);
+        if (result != false) done();
+
         function done() {
-          var elapsed = new Date() - t0;
+          var elapsed = (new Date() - t0) / 1000;
+          //Debug.write(name, '->', elapsed);
           LzBrowser.exec('window.status="Elapsed time: '+elapsed+'s"');
           LzBrowser.exec('receiveMessage("elapsed","'+name+'",'+elapsed+')');
+          setTimeout(next, 10);
         }
       }
     ]]></method>
@@ -33,12 +46,13 @@
   </class>
 
   <script><![CDATA[
-    var javascriptIncludesBase = "../includes/";
-    
+    Timer.javascriptIncludesBase = "lztestkit/lib/";
+    Timer.lztestkitIncludesBase = "lztestkit/includes/";
+
     LzBrowser.loadScript = function(src) {
       LzBrowser.exec('var s=document.createElement("script");s.type="text/javascript";s.src="'+src+'";document.body.appendChild(s)');
     }
-    
+
     Debug.error("For accurate timings, run with debug=false");
   ]]></script>
 </library>

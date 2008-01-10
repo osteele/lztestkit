@@ -1,0 +1,25 @@
+<!-- Copyright 2008 by Oliver Steele.  Available under the MIT License. -->
+<canvas>
+  <include href="lzunit"/>
+  <script src="../src/autorun-lz.js"/>
+  <include href="../src/lztimer.lzx"/>
+  
+  <script>
+    Timer.javascriptIncludesBase = "../lib/";
+    Timer.lztestkitIncludesBase = "../src/";
+  </script>
+  
+  <Timer>
+    <method name="timeEmpty"/>
+    
+    <method name="timeIteration"><![CDATA[
+      for (var ix = 100*1000; --ix > 0; )
+        ;
+    ]]></method>
+    
+    <method name="timeSetTimeout" args="done"><![CDATA[
+      setTimeout(done, 200);
+      return false;
+    ]]></method>
+  </Timer>
+</canvas>

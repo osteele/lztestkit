@@ -9,9 +9,8 @@ var TimingReporter = {
             name = name.replace(/^time(.)/, function(_,s) {
                 return s.toLowerCase();
             });
-            this.timings[name] = Math.max(this.timings[name]||0, time);
+            (this.timings[name] = this.timings[name]||[]).push(time);
             this.updateDisplay();
-            console.info(arguments);
             break;
         }
     },
@@ -20,22 +19,62 @@ var TimingReporter = {
         var self = this;
         if (!window.$)
             return this.thread = this.thread || setTimeout(function() {self.updateDisplay()}, 500);
-        this.thread && clearTimeout(this.thread);
         $('#results').remove();
         var html = ['<div id="results" style="">',
-            '<table><tr><th>Test</th><th>Time</th>'];
-        for (var name in this.timings)
-            html.push('<tr><td>', name, '</td><td>',
-                      String(this.timings[name]/1000).replace(/(\.\d\d).*/, '$1'),
-                      's</td></tr>');
+            '<table><tr><th>Test</th><th>Time</th><th>StdDev</th><th>Runs</th><th>Data</th></tr>'];
+        function toSeconds(value) {
+            return String(value).replace(/(\.\d\d).*/, '$1') + 's';
+        }
+        for (var name in this.timings) {
+            var times = this.timings[name];
+            html.push('<tr><td>', name,
+                      '</td><td>',
+                      toSeconds(times.mean()),
+                      '</td><td>',
+                      toSeconds(times.stddev()),
+                      '</td><td>',
+                      times.length,
+                      '</td><td>',
+                      times.map(toSeconds).join(', '),
+                      '</td></tr>');
+        }
         html.push('</table></div>');
         $('body').prepend(html.join(''));
         //$('object, embed').css({height:'50%'});
     }
 };
 
+Array.prototype.map = function(fn) {
+    var len = this.length,
+        result = new Array(len);
+    for (var ix = 0; ix < len; ix++)
+        if (ix in this)
+            result[ix] = fn(this[ix], ix);
+    return result;
+};
+
+Array.prototype.sum = function() {
+    var sum = 0;
+    for (var ix = 0; ix < this.length; ix++)
+        sum += this[ix];
+    return sum;
+};
+
+Array.prototype.mean = function() {
+    return this.sum() / this.length;
+};
+
+Array.prototype.stddev = function() {
+    var mean = this.mean(),
+        variance = 0;
+    for (var ix = 0; ix < this.length; ix++) {
+        var d = this[ix] - mean;
+        variance += d * d;
+    }
+    return Math.sqrt(variance);
+};
+
 (function(queue) {
-//    console.info('queue', queue);
     receiveMessage = function() {TimingReporter.handleMessage.apply(TimingReporter, arguments)};
     for (var ix = 0; ix < queue.length; ix++)
         receiveMessage.apply(null, queue[ix]);
