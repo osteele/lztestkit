@@ -1,0 +1,54 @@
+<!-- Copyright 2008 by Oliver Steele.  Available under the MIT License. -->
+<canvas debug="true">
+  <include href="../src/library.lzx"/>
+
+  <TestSuite>
+    <TestCase>
+      <method name="testArguments"><![CDATA[
+        function C() {}
+        var I = function(x){return x};
+        C.prototype = {a:I, b:I, c:I}
+
+        var m = mock(C);
+        m.expects.a(1);
+        m.a(2);
+        m.verify(this);
+
+        m.expects.a({a:1});
+        m.a({a:2});
+        m.verify(this);
+      ]]></method>
+
+      <method name="testXML"><![CDATA[
+return
+        m.expects.a(ds1.data);
+        m.a(ds2.data);
+        m.verify(this);
+
+        m.expects.a(ds3.data);
+        m.a(ds4.data);
+        m.verify(this);
+
+        m.expects.a(ds5.data);
+        m.a(ds6.data);
+        m.verify(this);
+
+        m.expects.a(ds7.data);
+        m.a(ds8.data);
+        m.verify(this);
+      ]]></method>
+    </TestCase>
+  </TestSuite>
+
+  <dataset name="ds1"><e1/></dataset>
+  <dataset name="ds2"><e2/></dataset>
+
+  <dataset name="ds3"><e1 a="expected"/></dataset>
+  <dataset name="ds4"><e1 a="actual"/></dataset>
+
+  <dataset name="ds5"><e1><e2/></e1></dataset>
+  <dataset name="ds6"><e1/></dataset>
+
+  <dataset name="ds7"><e1>expected</e1></dataset>
+  <dataset name="ds8"><e1>actual</e1></dataset>
+</canvas>

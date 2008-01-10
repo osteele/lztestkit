@@ -166,7 +166,7 @@
           // it on subsequent entry
           var state = {rsw:$reportSourceWarning}
           if (async) $reportSourceWarning = capturingReportSourceWarning;
-          result = fn.apply(this, arguments);
+          var result = fn.apply(this, arguments);
           $reportSourceWarning = state.rsw;
           if (pending <= 0)
             c.done();

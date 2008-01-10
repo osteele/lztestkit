@@ -1,4 +1,4 @@
-/* Copyright 2007 by Oliver Steele.  Available under the MIT License. */
+/* Copyright 2007-2008 by Oliver Steele.  Available under the MIT License. */
 
 // OL 3.4 compatibility
 TestSuite.addProperty != Object.addProperty
@@ -32,7 +32,7 @@ LzBrowser.exec = function(expr) {
     if (now < nextTime)
         return setTimeout(function(){LzBrowser.exec(expr)},
                           nextTime - now);
-    _root.getURL('javascript:'+expr);
+    _root.getURL('javascript:(function(){'+expr+'})()');
     arguments.callee.nextTime = now + 100;
 }
 
@@ -51,3 +51,10 @@ String.prototype['replace'] || (String.prototype.replace = function(pattern, sub
     }
     return segments.join('');
 })
+
+LzBrowser.setDefaultHTMLTitleToLoadURL = function() {
+    var name = LzBrowser.getLoadURL().split('?')[0].split('/').reverse()[0];
+    LzBrowser.exec('document.title=="OpenLaszlo Application"&&(document.title="'
+                   + name + '")');
+}
+LzBrowser.setDefaultHTMLTitleToLoadURL();

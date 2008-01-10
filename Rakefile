@@ -35,7 +35,7 @@ task 'build/index.html' => 'README' do |t|
 end
 
 AUTORUN_FILES = %w{autorun-browser.js autorun-lz.js autorun.css list-files.jsp}
-SHARED_FILES = AUTORUN_FILES + %w(hopkit.js jsspec.js lzmock.js lzspec.js lzunit-async.lzx lzunit-extensions.js)
+SHARED_FILES = AUTORUN_FILES + %w(hopkit.js jsspec.js lzmock.js lzspec.js lzunit-async.lzx lzunit-extensions.js lztimer.lzx lztimer-browser.js)
 
 # TODO: sync sequencing.js, hopkit.js with jsutils
 

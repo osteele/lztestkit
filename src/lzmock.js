@@ -10,7 +10,7 @@ var Mock = {
     callback: function(value) {
         return new this.Callback(value);
     },
-    expectEvent: function(sender, eventName, expectationValue) {
+    expectEvent: function(sender, eventName, expected) {
         var self = this,
             delegate = new LzDelegate({run:run}, 'run', sender, eventName)
         delegate.sender = sender;
@@ -21,9 +21,9 @@ var Mock = {
             if (!delegate.error)
                 return;
             delegate.error = 'was called, but with the wrong arguments';
-            if (typeof expectationValue == 'undefined' && typeof value == 'undefined'
-                || Expect.value(expectationValue, value, function() {
-                    delegate.error = Array.slice(arguments, 0);
+            if (typeof expected == 'undefined' && typeof value == 'undefined'
+                || Expect.value(expected, value, function(message) {
+                    delegate.error = message;
                 }))
                 delegate.error = null;
         }
@@ -71,7 +71,7 @@ function MockObject(master) {
     Mock._register(this);
     addMethods(master);
     typeof master == 'function' && addMethods(new master);
-    this.mock = {expects: expector, verify: verify};
+    var mock = this.mock = {expects: expector, verify: verify, testCase: null};
     this['expects'] || (this.expects = expector);
     this['verify'] || (this.verify = verify);
     this.stubs = this.stub = function(name) {
@@ -123,11 +123,20 @@ function MockObject(master) {
             var expectation = expectations.shift(),
                 actualArgs = arguments;
             Expect.arguments(expectation.arguments, arguments, function() {
-                var args = [[master, '.', name, '(): '].join('')];
-                args = args.concat(arguments);
-                args.push('; received');
-                args = args.concat(actualArgs);
-                fail.apply(null, args);
+                Array.prototype.push.call(arguments, '\n  in call to', name);
+                fail.apply(null, combineAdjacentStrings(arguments));
+                function combineAdjacentStrings(array) {
+                    var result = [],
+                        previous = null;
+                    for (var i = 0; i < array.length; i++) {
+                        var item = array[i];
+                        if (typeof item == 'string' && typeof previous == 'string')
+                            result[result.length-1] += ' ' + item;
+                        else
+                            result[result.length] = previous = item;
+                    }
+                    return result;
+                }
             });
             for (var ix = 0; ix < arguments.length; ix++)
                 if (expectation.arguments[ix] instanceof Mock.Callback)
@@ -176,7 +185,12 @@ function MockObject(master) {
     }
     function fail() {
         Debug.error.apply(Debug, arguments);
-        errors.push(Array.slice(arguments, 0));
+        var testCase = mock.testCase;
+        Debug.write(testCase);
+        if (testCase)
+            testCase.fail.call(testCase, arguments.join(' '));
+        else
+            errors.push(Array.slice(arguments, 0));
         error = true;
     }
     function verify(testcase) {
@@ -201,60 +215,93 @@ function MockObject(master) {
 var Expect = {
     limit: null,
 
-    arguments: function(expect, actual, fail) {
-        if (expect.length != actual.length)
-            return fail(['expected ', expect.length, ' arguments'].join(''));
-        for (var ix = 0; ix < arguments.length; ix++) {
-            var e = expect[ix],
-                a = actual[ix];
-            if (!this.value(e, a, fail))
-                return fail('expected', e, 'at position ' + (ix+1));
+    makeContext: function(expected, actual, parent) {
+        return {expected: expected,
+                actual: actual,
+                parent: parent,
+                isExpectationContext: true,
+                where: null,
+                at: function(where) {this.where=where; return this},
+                fail:reportError};
+
+        function reportError() {
+            var message = ['Values differ'],
+                first = true;
+                context = this;
+            while (true) {
+                if (!context['isExpectationContext']) {
+                    context.apply(null, message);
+                    return false;
+                }
+                if (!first)
+                    message.push('\n  ');
+                first = false;
+                context.where && message.push('at', context.where);
+                message.push('in', context.expected, '; expected', context.actual||undefined);
+                context = context.parent;
+            }
         }
     },
 
-    value: function(expect, actual, fail) {
-        if (expect == actual)
+    arguments: function(expected, actual, context) {
+        context = this.makeContext(expected, actual, context);
+        if (expected.length != actual.length)
+            return context.fail('length == ' + actual.length);
+        for (var ix = 0; ix < arguments.length; ix++) {
+            var e = expected[ix],
+                a = actual[ix];
+            if (!this.value(e, a, context.at('position ' + (ix+1))))
+                return false;
+        }
+        return true;
+    },
+
+    value: function(expected, actual, context) {
+        context = this.makeContext(expected, actual, context);
+        if (expected == actual)
             return true;
         if (this.limit != null) {
             if (this.limit <= 0)
                 return;
             this.limit -= 1;
-            0 && Debug.write('cf', expect, 'and', actual);
+            0 && Debug.write('cf', expected, 'and', actual);
         }
-        if (expect instanceof Function &&
-            (actual instanceof expect || actual === null))
+        if (expected instanceof Function &&
+            (actual instanceof expected || actual === null))
             return true;
-        if (expect instanceof Function)
-            return fail('oops!', expect, 'is a function');
-        if (expect instanceof LzDataElement)
-            return this.xml(expect, actual, fail);
-        if (expect instanceof Mock.Callback)
-            return !actual || typeof actual == 'function' || actual instanceof LzDelegate;
-        //if (expect.__proto__ != actual.__proto__)
-        //    return fail(expect, 'and', actual, 'have different prototypes');
-        if (typeof expect == 'object' && typeof actual == 'object') {
-            for (var name in expect)
-                if (!this.value(expect[name], actual[name], fail))
+        if (expected instanceof Function)
+            return context.fail('function');
+        if (expected instanceof LzDataElement)
+            return this._xml(expected, actual, context);
+        if (expected instanceof Mock.Callback) {
+            if (!actual || typeof actual == 'function' || actual instanceof LzDelegate)
+                return true;
+            return context.fail('callback');
+        }
+        //if (expected.__proto__ != actual.__proto__)
+        //    return fail(expected, 'and', actual, 'have different prototypes');
+        if (typeof expected == 'object' && typeof actual == 'object') {
+            for (var name in expected)
+                if (!this.value(expected[name], actual[name],
+                                context.at('property ' + name)))
                     return false;
             return true;
         }
-        fail('expected', expect, '; received ', actual);
-        return false;
+        return context.fail();
     },
 
-    xml: function(expect, actual, fail) {
-        if (expect.nodeName != actual.nodeName) {
-            fail(expect.nodeName, actual.nodeName, 'node name');
-            return false;
-        }
-        var eattributes = expect['attributes']||{},
-            echildren = expect['childNodes']||[];
+    _xml: function(expected, actual, context) {
+        if (expected.nodeName != actual.nodeName)
+            return context.at('nodeName').fail();
+        var eattributes = expected['attributes']||{},
+            echildren = expected['childNodes']||[];
         for (var aname in eattributes) {
-            var evalue = expect.attributes[aname],
+            var evalue = expected.attributes[aname],
                 avalue = actual.attributes[aname],
-                context = 'attribute '+expect.nodeName+'.@'+aname;
+                con = this.makeContext(evalue, avalue, context);
+            con.at('attribute ' + aname);
             if (typeof avalue == 'undefined')
-                return failed(evalue, avalue);
+                return con.fail();
             if (evalue == '*')
                 continue;
             if (evalue.charAt(0) == '{' && evalue.charAt(evalue.length-1) == '}')
@@ -262,13 +309,13 @@ var Expect = {
             switch (evalue) {
             case Number:
                 if (typeof avalue != 'number' && parseInt(avalue) != avalue)
-                    return failed(evalue, avalue);
+                    return con.fail();
                 break;
             case String:
                 break;
             default:
                 if (evalue != avalue)
-                    return failed(evalue, avalue);
+                    return con.fail();
             }
         }
         var includesText = false;
@@ -279,31 +326,43 @@ var Expect = {
                 continue;
             }
             var cname = echild.nodeName,
-                achild = null,
-                context = 'element ' + expect.nodeName+'.'+cname;
+                achild = null;
             for (var j = 0; j < actual.childNodes.length; j++) {
                 if (actual.childNodes[j]['nodeName'] == cname)
                     achild = achild || actual.childNodes[j];
             }
             if (!achild)
-                return failed(echild, achild, context);
+                return context.at('child named ' + cname).fail();
             if (echild['text']) {
                 if (echild.text != achild.childNodes[0].data)
-                    return failed(echild.text, achild);
+                    return context.fail(/*echild.text, achild*/);
             } else
-                Expect.value(echild, achild, failed);
+                if (!Expect.value(echild, achild, context))
+                    return;
         }
-        includesText && Expect.value(expect.toString(), actual.toString(), fail);
-        function failed(expect, actual) {
-            fail(context + ': expected ', expect, '; received ', actual);
-            return false;
-        }
+        if (includesText)
+            return Expect.value(expected.toString(), actual.toString(), context);
+        return true;
     }
 }
 
 function mock(object) {
     return Mock.create.apply(Mock, arguments);
 }
+
+// OL 3.4 compatibility
+Test.addProperty != Object.addProperty
+    || (Test.addProperty = function(name, value) {this.prototype[name] = value});
+
+Test.addProperty('mock', function(object) {
+    var mock = Mock.create.apply(Mock, arguments);
+    mock.mock.testCase = this;
+    return mock;
+});
+
+/*
+ * JavaScript extensions
+ */
 
 Array['slice'] || (Array.slice = (function() {
     var slice = Array.prototype.slice;

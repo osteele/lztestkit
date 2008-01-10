@@ -1,0 +1,44 @@
+<!-- Copyright 2008 by Oliver Steele.  Available under the MIT License. -->
+<library>
+  <class name="Timer" extends="node">
+    <method name="init"><![CDATA[
+      super.init();
+      this.setUp();
+      LzBrowser.exec('window.receiveMessage = function(){(arguments.callee.queue=arguments.callee.queue||[]).push(Array.prototype.slice.call(arguments,0))}');
+      LzBrowser.loadScript(javascriptIncludesBase+"lztimer-browser.js");
+      LzBrowser.loadScript(javascriptIncludesBase+"jquery-1.2.1.min.js");
+      LzIdle.callOnIdle(new LzDelegate(this, 'runTimings'));
+    ]]></method>
+
+    <method name="runTimings"><![CDATA[
+      for (var name in this)
+        if (typeof(this[name]) == 'function' && name.indexOf('time') == 0)
+          runTiming(name, this, this[name]);
+      function runTiming(name, self, fn) {
+        LzBrowser.exec('window.status="Running '+name+'"');
+        var t0 = new Date;
+        self[name](done);
+        done();
+        
+        function done() {
+          var elapsed = new Date() - t0;
+          LzBrowser.exec('window.status="Elapsed time: '+elapsed+'s"');
+          LzBrowser.exec('receiveMessage("elapsed","'+name+'",'+elapsed+')');
+        }
+      }
+    ]]></method>
+
+    <method name="setUp">
+    </method>
+  </class>
+
+  <script><![CDATA[
+    var javascriptIncludesBase = "../includes/";
+    
+    LzBrowser.loadScript = function(src) {
+      LzBrowser.exec('var s=document.createElement("script");s.type="text/javascript";s.src="'+src+'";document.body.appendChild(s)');
+    }
+    
+    Debug.error("For accurate timings, run with debug=false");
+  ]]></script>
+</library>

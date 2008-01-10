@@ -8,9 +8,7 @@ window.console || (window.console={info:function(){}});
 var gRunner;
 
 function LzTestRunner(files) {
-    this.files = files;
-    this.remaining = [].concat(files);
-    this.current = null;
+    this.initialize.apply(this, arguments);
 }
 
 LzTestRunner.skip = 0;
@@ -23,6 +21,7 @@ LzTestRunner.run = function(options) {
     for (var i = 0; i < files.length; i++) {
         var file = files[i];
         if (!file.match(/\.swf$/)
+            && !file.match(/^(#.*#|\.#.*|.*~)$/)
             && file.match(match)
             && (!exclude || !file.match(exclude)))
             matches.push(file);
@@ -32,6 +31,12 @@ LzTestRunner.run = function(options) {
 }
 
 LzTestRunner.prototype = {
+    initialize: function(files) {
+        this.files = files;
+        this.remaining = [].concat(files);
+        this.current = null;
+    },
+
     run: function() {
         $('body').addClass('running');
         this.runNext();
@@ -90,7 +95,9 @@ LzTestRunner.prototype = {
     load: function(file) {
         this.unload();
         var app = this.current = new LzTestApplication(file);
-        this.status('running ' + app.url);
+        this.status(['running ', app.url,
+                     ' (', (this.files.length - this.remaining.length),
+                     '/', this.files.length, ')'].join(''));
         app.load();
     },
 
