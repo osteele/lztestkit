@@ -1,6 +1,8 @@
 <!-- Copyright 2008 by Oliver Steele.  Available under the MIT License. -->
 <library>
   <class name="Timer" extends="node">
+    <attribute name="iterations" type="number" value="5"/>
+    
     <method name="init"><![CDATA[
       super.init();
       LzBrowser.exec('window.receiveMessage = function(){(arguments.callee.queue=arguments.callee.queue||[]).push(Array.prototype.slice.call(arguments,0))}');
@@ -11,10 +13,12 @@
 
     <method name="runTimings"><![CDATA[
       var self = this,
-          tests = [];
+          tests = [],
+          iterations = this.iterations,
+          trace = 0;
       for (var name in this)
         if (typeof(this[name]) == 'function' && name.indexOf('time') == 0) {
-          for (var ix = 0; ix < 5; ix++)
+          for (var ix = 0; ix < iterations; ix++)
             tests.push(name);
           }
       next();
@@ -25,14 +29,32 @@
         runTiming(name);
       }
       function runTiming(name) {
+        trace && Debug.write(name);
+        var suspensor = Timer.suspend = function() {
+          var st0 = new Date;
+          trace && Debug.write(name, 'suspend');
+          Timer.suspend = function() {
+            Debug.error('suspend called twice');
+          }
+          return {
+            resume: function() {
+              1 && Debug.write(name, 'resume', new Date - st0);
+              this.resume = function() { Debug.error('resume called twice') }
+              Timer.suspend = suspensor;
+              suspended += new Date - st0;
+            }
+          }
+        }
         LzBrowser.exec('window.status="Running '+name+'"');
         self.setUp();
-        var t0 = new Date;
+        var t0 = new Date,
+            suspended = 0;
         var result = self[name](done);
         if (result != false) done();
 
         function done() {
-          var elapsed = (new Date() - t0) / 1000;
+          var elapsed = (new Date() - t0 - suspended) / 1000;
+          trace && Debug.write(name, 'done', elapsed);
           //Debug.write(name, '->', elapsed);
           LzBrowser.exec('window.status="Elapsed time: '+elapsed+'s"');
           LzBrowser.exec('receiveMessage("elapsed","'+name+'",'+elapsed+')');

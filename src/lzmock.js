@@ -57,6 +57,18 @@ var Mock = {
                 ? setTimeout(function() {fn.call(null, value)}, 10)
                 : fn.call(null, value);
         }
+    },
+    _combineAdjacentStrings: function(array) {
+        var result = [],
+            previous = null;
+        for (var i = 0; i < array.length; i++) {
+            var item = array[i];
+            if (typeof item == 'string' && typeof previous == 'string')
+                result[result.length-1] += ' ' + item;
+            else
+                result[result.length] = previous = item;
+        }
+        return result;
     }
 }
 
@@ -124,19 +136,7 @@ function MockObject(master) {
                 actualArgs = arguments;
             Expect.arguments(expectation.arguments, arguments, function() {
                 Array.prototype.push.call(arguments, '\n  in call to', name);
-                fail.apply(null, combineAdjacentStrings(arguments));
-                function combineAdjacentStrings(array) {
-                    var result = [],
-                        previous = null;
-                    for (var i = 0; i < array.length; i++) {
-                        var item = array[i];
-                        if (typeof item == 'string' && typeof previous == 'string')
-                            result[result.length-1] += ' ' + item;
-                        else
-                            result[result.length] = previous = item;
-                    }
-                    return result;
-                }
+                fail.apply(null, Mock._combineAdjacentStrings(arguments));
             });
             for (var ix = 0; ix < arguments.length; ix++)
                 if (expectation.arguments[ix] instanceof Mock.Callback)
@@ -215,7 +215,7 @@ function MockObject(master) {
 var Expect = {
     limit: null,
 
-    makeContext: function(expected, actual, parent) {
+    _makeContext: function(expected, actual, parent) {
         return {expected: expected,
                 actual: actual,
                 parent: parent,
@@ -244,7 +244,7 @@ var Expect = {
     },
 
     arguments: function(expected, actual, context) {
-        context = this.makeContext(expected, actual, context);
+        context = this._makeContext(expected, actual, context);
         if (expected.length != actual.length)
             return context.fail('length == ' + actual.length);
         for (var ix = 0; ix < arguments.length; ix++) {
@@ -257,7 +257,7 @@ var Expect = {
     },
 
     value: function(expected, actual, context) {
-        context = this.makeContext(expected, actual, context);
+        context = this._makeContext(expected, actual, context);
         if (expected == actual)
             return true;
         if (this.limit != null) {
@@ -298,7 +298,7 @@ var Expect = {
         for (var aname in eattributes) {
             var evalue = expected.attributes[aname],
                 avalue = actual.attributes[aname],
-                con = this.makeContext(evalue, avalue, context);
+                con = this._makeContext(evalue, avalue, context);
             con.at('attribute ' + aname);
             if (typeof avalue == 'undefined')
                 return con.fail();
@@ -359,6 +359,13 @@ Test.addProperty('mock', function(object) {
     mock.mock.testCase = this;
     return mock;
 });
+
+Test.addProperty('mock', function(object) {
+    var mock = Mock.create.apply(Mock, arguments);
+    mock.mock.testCase = this;
+    return mock;
+});
+
 
 /*
  * JavaScript extensions

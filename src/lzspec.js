@@ -4,6 +4,10 @@ JSSpec.define('send', function(sender, name) {
     Mock.expectEvent.apply(Mock, arguments);
 });
 
+// OL 3.4 compatibility
+Test.addProperty != Object.addProperty
+    || (Test.addProperty = function(name, value) {this.prototype[name] = value});
+
 TestCase.addProperty('calling', function(target, name) {
     return JSSpec.calling.apply(JSSpec, arguments).set('testCase', this);
 });
@@ -29,10 +33,18 @@ TestCase.addProperty('expect', function(value) {
     return new ExpectValue(value, this);
 });
 
+TestCase.addProperty('value', function(value) {
+    return new ExpectValue(value, this);
+});
+
+TestCase.prototype.expect.event = function(sender, eventName) {
+    Mock.exectEvent(sender, eventName);
+}
+
 function ExpectValue(value, testCase) {
     this.value = value;
     this.testCase = testCase;
-    this.is = this;
+    this.should = this.be = this.is = this;
 }
 
 ExpectValue.prototype = {
@@ -40,15 +52,33 @@ ExpectValue.prototype = {
         this.testCase.assertTrue(this.value instanceof klass, klass);
     },
 
+    an: function(klass) {
+        return this.a.apply(this, arguments);
+    },
+
     property: function(propertyName) {
-        var actual = this.value,
-            testCase = this.testCase;
+        var self = this,
+            actual = this.value;
         var chain = {
             equal: function(value) {
-                testCase.assertEquals(value, actual[propertyName], propertyName);
+                var testCase = self.testCase;
+                //testCase.assertEquals(value, actual[propertyName], propertyName);
+                var failed = false;
+                Expect.value(value, actual[propertyName], function() {
+                    Array.prototype.push.call(arguments, '\n   at property \''
+                                              + propertyName + '\' of',
+                                             actual);
+                    arguments = Mock._combineAdjacentStrings(arguments);
+                    Debug.error.apply(Debug, arguments);
+                    testCase.fail.call(testCase, arguments.join(''));
+                    failed = true;
+                })
+                failed || testCase.assertTrue(true);
+                return chain;
             }
         }
-        chain.should = chain;
+        chain.be = chain.equal;
+        chain.should = chain.and = chain;
         return chain;
     },
 
