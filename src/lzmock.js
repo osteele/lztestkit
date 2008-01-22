@@ -155,7 +155,7 @@ function MockObject(master) {
                 };
             expectations.push(expectation);
 
-            return HopKit.make(function(define) {
+            return Fluently.make(function(define) {
                 define('calls', calls),
                 define('returns', returns);
                 define.alias('calls.back', 'calls');

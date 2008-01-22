@@ -1,6 +1,6 @@
 /* Copyright 2007-2008 by Oliver Steele.  Released under the MIT License. */
 
-var HopKit = {
+var Fluently = {
     // returns a new object initialized by `fn`.  `fn` is passed a single
     // argument `define` which defines chainable methods on the object.
     make:function(fn) {

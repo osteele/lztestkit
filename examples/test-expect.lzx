@@ -5,7 +5,7 @@
   <TestSuite>
     <TestCase>
       <method name="testValues"><![CDATA[
-        value(1).should.be(2);
+        value(1).should.be.equal(2);
       ]]></method>
     </TestCase>
   </TestSuite>

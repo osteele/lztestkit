@@ -111,7 +111,7 @@ function ExpectValue(value, testCase, context) {
     var options = {};
     if (arguments.length < 3)
         context = [];
-    return HopKit.make(function(define) {
+    return Fluently.make(function(define) {
         define.synonym('should');
         define.synonym('be');
         define.modifier.dictionary(options);

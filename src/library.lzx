@@ -2,7 +2,7 @@
 <library>
   <include href="lzunit"/>
   <script src="autorun-lz.js"/>
-  <script src="hopkit.js"/>
+  <script src="fluently.js"/>
   <script src="lzmock.js"/>
   <script src="jsspec.js"/>
   <script src="lzspec.js"/>
