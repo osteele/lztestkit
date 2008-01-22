@@ -30,24 +30,24 @@ TestCase.addProperty('constructing', function(klass) {
 });
 
 TestCase.addProperty('expect', function(value) {
-    return new ExpectValue(value, this);
+    return ExpectValue(value, this);
 });
 
 TestCase.addProperty('value', function(value) {
-    return new ExpectValue(value, this);
+    return ExpectValue(value, this);
 });
 
 TestCase.prototype.expect.event = function(sender, eventName) {
     Mock.exectEvent(sender, eventName);
 }
 
-function ExpectValue(value, testCase) {
+function xExpectValue(value, testCase) {
     this.value = value;
     this.testCase = testCase;
     this.should = this.be = this.is = this;
 }
 
-ExpectValue.prototype = {
+xExpectValue.prototype = {
     a: function(klass) {
         this.testCase.assertTrue(this.value instanceof klass, klass);
     },
@@ -104,5 +104,72 @@ ExpectValue.prototype = {
                     return false;
             return true;
         }
+    }
+}
+
+function ExpectValue(value, testCase, context) {
+    var options = {};
+    if (arguments.length < 3)
+        context = [];
+    return HopKit.make(function(define) {
+        define.synonym('should');
+        define.synonym('be');
+        define.modifier.dictionary(options);
+        define.modifier('not');
+        define('and').sets(options, 'not').to(false);
+        define('equal', function(expected) {
+            if (options.not) {
+                return Expect.value(expected, value, function(){})
+                    ? fail(value, 'should not equal', expected)
+                    : success();
+            } else {
+                Expect.value(expected,
+                             typeof value == 'undefined' ? undefined : value,
+                             fail)
+                    && success();
+            }
+        });
+        define('include', function(properties) {
+            var failed = false;
+            for (var name in properties) {
+                if (value[name] == undefined)
+                    f(value, 'does not include', name);
+                else
+                    Expect.value(properties[name], value[name], function() {
+                        arguments = Array.prototype.concat.call(arguments,
+                                                                'at', name);
+                        f.apply(null, arguments);
+                    });
+            }
+            if (options.not)
+                failed
+                ? success()
+                : fail(value, 'should not include', properties);
+            function f() {
+                failed = true;
+                options.not || fail.apply(null, arguments);
+            }
+        });
+        define('property', function(propertyName) {
+            return ExpectValue(value[propertyName], testCase,
+                               ['property', propertyName, context ? ' in ' : ''].
+                               concat(context));
+        });
+        define('a', function(klass) {
+            options.not
+                ? testCase.assertFalse(value instanceof klass, klass)
+                : testCase.assertTrue(value instanceof klass, klass);
+        });
+        define.synonym('an', 'a');
+    });
+    function fail() {
+        if (context.length)
+            arguments = Array.prototype.concat.call(arguments, context);
+        arguments = Mock._combineAdjacentStrings(arguments);
+        Debug.error.apply(Debug, arguments);
+        testCase && testCase.fail.call(testCase, arguments.join(' '));
+    }
+    function success() {
+        testCase.assertTrue(true);
     }
 }

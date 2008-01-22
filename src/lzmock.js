@@ -237,7 +237,8 @@ var Expect = {
                     message.push('\n  ');
                 first = false;
                 context.where && message.push('at', context.where);
-                message.push('in', context.expected, '; expected', context.actual||undefined);
+                message.push('in', context['actual'],
+                             '; expected', context.expected);
                 context = context.parent;
             }
         }
@@ -280,7 +281,13 @@ var Expect = {
         }
         //if (expected.__proto__ != actual.__proto__)
         //    return fail(expected, 'and', actual, 'have different prototypes');
+        if (expected instanceof Date)
+            return (actual instanceof Date && expected.getTime() == actual.getTime())
+            ? true
+            : context.fail();
         if (typeof expected == 'object' && typeof actual == 'object') {
+            if (expected instanceof Array && expected.length != actual.length)
+                return context.fail('length');
             for (var name in expected)
                 if (!this.value(expected[name], actual[name],
                                 context.at('property ' + name)))

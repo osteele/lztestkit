@@ -11,6 +11,12 @@ var HopKit = {
         define.alias = function(target, source) {
             path(target).set(host[source]);
         }
+        define.synonym = function(target, source) {
+            if (arguments.length < 2)
+                host[target] = host;
+            else
+                path(target).set(host[source]);
+        }
         define.empty = function(name) {
             host[name] = host;
         }

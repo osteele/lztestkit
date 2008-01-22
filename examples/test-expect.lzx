@@ -1,0 +1,12 @@
+<!-- Copyright 2008 by Oliver Steele.  Available under the MIT License. -->
+<canvas debug="true">
+  <include href="../src/library.lzx"/>
+
+  <TestSuite>
+    <TestCase>
+      <method name="testValues"><![CDATA[
+        value(1).should.be(2);
+      ]]></method>
+    </TestCase>
+  </TestSuite>
+</canvas>

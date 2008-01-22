@@ -9,30 +9,45 @@
         var I = function(x){return x};
         C.prototype = {a:I, b:I, c:I}
 
+        Debug.write('This should pass');
+        var m = mock(C);
+        m.expects.a(1);
+        m.a(1);
+        m.verify(this);
+
+        Debug.write('Expect an error: expected 2; called with 1');
         var m = mock(C);
         m.expects.a(1);
         m.a(2);
         m.verify(this);
 
+        Debug.write('Expect an error: expected a:2; called with a:1');
         m.expects.a({a:1});
         m.a({a:2});
         m.verify(this);
       ]]></method>
 
       <method name="testXML"><![CDATA[
-return
+        var m = mock({a:function(){}});
+
+        Debug.write('These should fail');
+
+        // different element name
         m.expects.a(ds1.data);
         m.a(ds2.data);
         m.verify(this);
 
+        // different attribute
         m.expects.a(ds3.data);
         m.a(ds4.data);
         m.verify(this);
 
+        // missing child
         m.expects.a(ds5.data);
         m.a(ds6.data);
         m.verify(this);
 
+        // different text
         m.expects.a(ds7.data);
         m.a(ds8.data);
         m.verify(this);
