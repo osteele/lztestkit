@@ -21,20 +21,20 @@ var TimingReporter = {
             return this.thread = this.thread || setTimeout(function() {self.updateDisplay()}, 500);
         $('#results').remove();
         var html = ['<div id="results" style="">',
-            '<table><tr><th>Test</th><th>Time</th><th>StdDev</th><th>Runs</th><th>Data</th></tr>'];
+            '<table><tr><th>Test</th><th>Time (&plusmn;&sigma;)</th><th>Trials</th><th>Data</th></tr>'];
         function toSeconds(value) {
             return String(value).replace(/(\.\d\d).*/, '$1') + 's';
         }
         for (var name in this.timings) {
             var times = this.timings[name];
-            html.push('<tr><td>', name,
-                      '</td><td>',
+            html.push('<tr><td class="function-name">', name,
+                      '</td><td class="time">',
                       toSeconds(times.mean()),
-                      '</td><td>',
+                      '&plusmn;',
                       toSeconds(times.stddev()),
-                      '</td><td>',
+                      '</td><td class="trials">',
                       times.length,
-                      '</td><td>',
+                      '</td><td class="data">',
                       times.map(toSeconds).join(', '),
                       '</td></tr>');
         }

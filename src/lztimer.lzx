@@ -1,24 +1,27 @@
 <!-- Copyright 2008 by Oliver Steele.  Available under the MIT License. -->
 <library>
+  <script src="autorun-lz.js"/>
   <class name="Timer" extends="node">
-    <attribute name="iterations" type="number" value="5"/>
+    <attribute name="trials" type="number" value="5"/>
     
     <method name="init"><![CDATA[
       super.init();
       LzBrowser.exec('window.receiveMessage = function(){(arguments.callee.queue=arguments.callee.queue||[]).push(Array.prototype.slice.call(arguments,0))}');
       LzBrowser.loadScript(Timer.javascriptIncludesBase+"jquery-1.2.1.min.js");
       LzBrowser.loadScript(Timer.lztestkitIncludesBase+"lztimer-browser.js");
+      LzBrowser.loadStyleSheet(Timer.lztestkitIncludesBase+"lztimer.css");
+      LzBrowser.exec.nextTime = new Date(new Date().getTime() + 20 * 1000);
       LzIdle.callOnIdle(new LzDelegate(this, 'runTimings'));
     ]]></method>
 
     <method name="runTimings"><![CDATA[
       var self = this,
           tests = [],
-          iterations = this.iterations,
+          trials = this.trials,
           trace = 0;
       for (var name in this)
         if (typeof(this[name]) == 'function' && name.indexOf('time') == 0) {
-          for (var ix = 0; ix < iterations; ix++)
+          for (var ix = 0; ix < trials; ix++)
             tests.push(name);
           }
       next();
@@ -56,8 +59,8 @@
           var elapsed = (new Date() - t0 - suspended) / 1000;
           trace && Debug.write(name, 'done', elapsed);
           //Debug.write(name, '->', elapsed);
-          LzBrowser.exec('window.status="Elapsed time: '+elapsed+'s"');
-          LzBrowser.exec('receiveMessage("elapsed","'+name+'",'+elapsed+')');
+          LzBrowser.exec('window.status="Elapsed time for '+name+': '+elapsed+'s"');
+          LzBrowser.exec('window.receiveMessage("elapsed","'+name+'",'+elapsed+')');
           setTimeout(next, 10);
         }
       }
@@ -73,6 +76,10 @@
 
     LzBrowser.loadScript = function(src) {
       LzBrowser.exec('var s=document.createElement("script");s.type="text/javascript";s.src="'+src+'";document.body.appendChild(s)');
+    }
+
+    LzBrowser.loadStyleSheet = function(src) {
+      LzBrowser.exec('var s=document.createElement("link");s.type="text/css";s.rel="stylesheet";s.href="'+src+'";document.body.appendChild(s)');
     }
 
     Debug.error("For accurate timings, run with debug=false");
