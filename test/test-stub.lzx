@@ -1,0 +1,26 @@
+<!-- Copyright 2008 by Oliver Steele.  Available under the MIT License. -->
+<canvas debug="true">
+  <include href="../src/library.lzx"/>
+
+  <TestSuite>
+    <TestCase>
+      <method name="testCallback"><![CDATA[
+        function C() {}
+        var I = function(x){return x};
+        C.prototype = {a:I, b:I, c:I}
+        
+        var o = mock(C);
+      
+        var r = undefined;
+        o.stub('a').by.calling(1);
+        o.a(function(x) { r = x });
+        assertEquals(1, r);
+
+        var r = undefined;
+        o.stub.b.by.calling(2);
+        o.b(function(x) { r = x });
+        assertEquals(2, r);
+      ]]></method>
+    </TestCase>
+  </TestSuite>
+</canvas>

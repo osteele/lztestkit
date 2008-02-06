@@ -86,11 +86,12 @@ function MockObject(master) {
     var mock = this.mock = {expects: expector, verify: verify, testCase: null};
     this['expects'] || (this.expects = expector);
     this['verify'] || (this.verify = verify);
-    this.stubs = this.stub = function(name) {
+    this.stubs = this.stub = stubber;
+    function stubber(name) {
         var callback = null,
             returnValue = null,
             stub = stubs[name] = {
-                applyTo:function(args) {
+                applyTo: function(args) {
                     Mock['trace'] && Debug.write('stub', name, args);
                     if (callback)
                         for (var i = 0; i < args.length; i++) {
@@ -101,13 +102,13 @@ function MockObject(master) {
                         }
                     return typeof returnValue ? undefined : returnValue[0];
                 },
-                callback:function(value) {
+                callback: function(value) {
                     callback = Array.slice(arguments, 0);
                 },
-                calling:function(value) {
+                calling: function(value) {
                     callback = Array.slice(arguments, 0);
                 },
-                returning:function(value) {
+                returning: function(value) {
                     returnValue = [value];
                 }
             };
@@ -119,6 +120,7 @@ function MockObject(master) {
             typeof object[name] == 'function' && addMethod(name);
     }
     function addMethod(name) {
+        stubber[name] = stubber(name);
         self[name] = function() {
             Mock['trace'] && Debug.write('call', name, arguments);
             // stop checking if we've already had an error

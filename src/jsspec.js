@@ -1,4 +1,4 @@
-/* Copyright 2007 by Oliver Steele.  Released under the MIT License. */
+/* Copyright 2007-2008 by Oliver Steele.  Released under the MIT License. */
 
 var JSSpec = {
     define:function() {
