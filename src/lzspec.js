@@ -37,6 +37,15 @@ TestCase.addProperty('value', function(value) {
     return ExpectValue(value, this);
 });
 
+TestCase.addProperty('captureEvent', function(sender, eventName) {
+	var delegate = new LzDelegate({run:function() {
+        holder.called = true;
+	    holder.value = arguments[0];
+	}}, 'run', sender, eventName),
+	holder = {called:true, unregister:function(){delegate.unregisterAll()}};
+	return holder;
+});
+
 TestCase.prototype.expect.event = function(sender, eventName) {
     Mock.exectEvent(sender, eventName);
 }

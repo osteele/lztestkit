@@ -82,7 +82,11 @@ function MockObject(master) {
         errors = [];
     Mock._register(this);
     addMethods(master);
-    typeof master == 'function' && addMethods(new master);
+    if (typeof master == 'function') {
+        addMethods(new master);
+        var finalizer = (master['mock']||{}).finalize;
+        finalizer && finalizer(this);
+    }
     var mock = this.mock = {expects: expector, verify: verify, testCase: null};
     this['expects'] || (this.expects = expector);
     this['verify'] || (this.verify = verify);

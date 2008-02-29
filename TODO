@@ -7,3 +7,4 @@
 * more test cases, especially for hopkit
 * autorun should only return canvas files
 * can autorun recover from a non-canvas file?
+* test cases for finalizer, captureEvent
