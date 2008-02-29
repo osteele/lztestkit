@@ -84,7 +84,7 @@ function MockObject(master) {
     addMethods(master);
     if (typeof master == 'function') {
         addMethods(new master);
-        var finalizer = (master['mock']||{}).finalize;
+        var finalizer = (master['mock']||{})['finalize'] || null;
         finalizer && finalizer(this);
     }
     var mock = this.mock = {expects: expector, verify: verify, testCase: null};
@@ -147,9 +147,10 @@ function MockObject(master) {
             for (var ix = 0; ix < arguments.length; ix++)
                 if (expectation.arguments[ix] instanceof Mock.Callback)
                     expectation.arguments[ix].exec(arguments[ix]);
+            if (expectation.hasReturnValue)
+                return expectation.returnValue;
             if (stub)
                 return stub.applyTo(arguments);
-            return expectation.value;
         };
         expector[name] = function() {
             Mock['trace'] && Debug.write('expect', name, arguments);
@@ -157,7 +158,8 @@ function MockObject(master) {
                 expectation = {
                     name: name,
                     arguments: Array.slice(arguments, 0),
-                    value: null
+                    hasReturnValue: false,
+                    returnValue: undefined
                 };
             expectations.push(expectation);
 
@@ -165,27 +167,38 @@ function MockObject(master) {
                 define('calls', calls),
                 define('returns', returns);
                 define.alias('calls.back', 'calls');
+                define('captures.callback', function(pos) {
+                    if (arguments.length < 1)
+                        pos = findFirstFunction();
+                    var cb = expectation.arguments[pos] = Mock.callback(undefined);
+                    cb.exec = function(fn) { this.fn = fn }
+                    cb.call = function(values) { this.fn.apply(undefined, arguments) }
+                    return cb;
+                });
                 define.empty('and');
                 define.modifier.dictionary(options);
                 define.modifier('eventually');
             });
+            function findFirstFunction() {
+                var args = expectation.arguments,
+                    len = args.length;
+                for (var i = 0; i < len; i++)
+                    if (args[i] == Function)
+                        return i;
+                Debug.error('no function position');
+            }
 
             function calls(pos, value) {
                 if (arguments.length < 2) {
-                    var args = expectation.arguments,
-                        len = args.length;
                     value = pos;
-                    for (var i = 0; i < len; i++)
-                        if (args[i] == Function) {
-                            pos = i;
-                            break;
-                        }
+                    pos = findFirstFunction();
                 }
                 var cb = expectation.arguments[pos] = Mock.callback(value);
                 cb.async = options.eventually;
             };
             function returns(value) {
-                expectation.value = value;
+                expectation.hasReturnValue = true;
+                expectation.returnValue = value;
             }
         }
     }

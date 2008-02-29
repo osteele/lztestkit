@@ -1,0 +1,46 @@
+<!-- Copyright 2008 by Oliver Steele.  Available under the MIT License. -->
+<canvas debug="true">
+  <include href="../src/library.lzx"/>
+
+  <TestSuite>
+    <TestCase>
+      <method name="setUp"><![CDATA[
+        function C() {}
+        var I = function(x){return x};
+        C.prototype = {a:I, b:I, c:I};
+        this.C = C;
+      ]]></method>
+      
+      <method name="testReturnValue"><![CDATA[
+        var o = mock(this.C);
+        
+        o.mock.expects.a(1).and.returns(2);
+        var r = o.a(1);
+        o.mock.verify();
+        assertEquals(2, r);
+      ]]></method>
+      
+      <method name="testCallback"><![CDATA[
+        var o = mock(this.C);
+        
+        o.mock.expects.a(Function).and.calls.back(1);
+        var r = undefined;
+        o.a(function(x) { r = x });
+        o.mock.verify();
+        assertEquals(1, r);
+      ]]></method>
+      
+      <method name="testDeferredCallback"><![CDATA[
+        var o = mock(this.C);
+        
+        var callback = o.mock.expects.a(Function).and.captures.callback();
+        var r = null;
+        o.a(function(x) { r = x });
+        o.mock.verify();
+        assertEquals(null, r);
+        callback.call(1);
+        assertEquals(1, r);
+      ]]></method>
+    </TestCase>
+  </TestSuite>
+</canvas>
