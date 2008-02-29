@@ -41,72 +41,6 @@ TestCase.prototype.expect.event = function(sender, eventName) {
     Mock.exectEvent(sender, eventName);
 }
 
-function xExpectValue(value, testCase) {
-    this.value = value;
-    this.testCase = testCase;
-    this.should = this.be = this.is = this;
-}
-
-xExpectValue.prototype = {
-    a: function(klass) {
-        this.testCase.assertTrue(this.value instanceof klass, klass);
-    },
-
-    an: function(klass) {
-        return this.a.apply(this, arguments);
-    },
-
-    property: function(propertyName) {
-        var self = this,
-            actual = this.value;
-        var chain = {
-            equal: function(value) {
-                var testCase = self.testCase;
-                //testCase.assertEquals(value, actual[propertyName], propertyName);
-                var failed = false;
-                Expect.value(value, actual[propertyName], function() {
-                    Array.prototype.push.call(arguments, '\n   at property \''
-                                              + propertyName + '\' of',
-                                             actual);
-                    arguments = Mock._combineAdjacentStrings(arguments);
-                    Debug.error.apply(Debug, arguments);
-                    testCase.fail.call(testCase, arguments.join(''));
-                    failed = true;
-                })
-                failed || testCase.assertTrue(true);
-                return chain;
-            }
-        }
-        chain.be = chain.equal;
-        chain.should = chain.and = chain;
-        return chain;
-    },
-
-    properties: function(properties) {
-        var value = this.value,
-            testCase = this.testCase;
-        for (var propertyName in properties) {
-            var expect = properties[propertyName],
-                actual = value[propertyName];
-            if (expect instanceof Date && expect/1 == actual/1)
-                expect = actual;
-            if (expect instanceof Array && actual instanceof Array
-                && equalArrays(expect, actual))
-                expect = actual;
-            testCase.assertEquals(expect, actual, propertyName);
-        }
-
-        function equalArrays(a, b) {
-            if (a.length != b.length)
-                return false;
-            for (var ix = 0; ix < a.length; ix++)
-                if (a[ix] != b[ix])
-                    return false;
-            return true;
-        }
-    }
-}
-
 function ExpectValue(value, testCase, context) {
     var options = {};
     if (arguments.length < 3)
@@ -128,7 +62,12 @@ function ExpectValue(value, testCase, context) {
                              fail)
                     && success();
             }
-        });
+        }),
+        define('contain', function(item) {
+            options.not
+                ? testCase.assertNotContains(value, item)
+                : testCase.assertContains(value, item);
+        }),
         define('include', function(properties) {
             var failed = false;
             for (var name in properties) {
@@ -155,10 +94,11 @@ function ExpectValue(value, testCase, context) {
                                ['property', propertyName, context ? ' in ' : ''].
                                concat(context));
         });
-        define('a', function(klass) {
+        define('a', function(klassOrType) {
+            var result = typeof value == klassOrType || value instanceof klassOrType;
             options.not
-                ? testCase.assertFalse(value instanceof klass, klass)
-                : testCase.assertTrue(value instanceof klass, klass);
+                ? testCase.assertFalse(result, klassOrType)
+                : testCase.assertTrue(result, klassOrType);
         });
         define.synonym('an', 'a');
     });

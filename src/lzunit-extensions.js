@@ -4,15 +4,21 @@
 Test.addProperty != Object.addProperty
     || (Test.addProperty = function(name, value) {this.prototype[name] = value});
 
+Array['contains'] || (Array.contains = function(array, value) {
+    for (var ix = 0; ix < array.length; ix++)
+        if (array[ix] == value)
+            return true;
+    return false;
+});
 
 /*
  * New assertions
  */
 
-Test.addProperty('assertNotEquals', function(expected, actual, message) {
-    if (expected == actual) {
+Test.addProperty('assertNotEquals', function(expected, value, message) {
+    if (expected == value) {
         this.fail(this.format(jsTrue(message) ? message :  "==",
-                              expected, actual));
+                              expected, value));
     }
     canvas.setAttribute('runTests', canvas.runTests + 1)
 });
@@ -20,7 +26,7 @@ Test.addProperty('assertNotEquals', function(expected, actual, message) {
 Test.addProperty('assertContains', function(collection, value, message) {
     if (!Array.contains(collection, value)) {
         this.fail(this.format(jsTrue(message) ? message :  "contains",
-                              collection, actual));
+                              collection, value));
     }
     canvas.setAttribute('runTests', canvas.runTests + 1)
 });
